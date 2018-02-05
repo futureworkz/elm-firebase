@@ -1,7 +1,7 @@
 module Firebase exposing (..)
 
-import Native.FirebaseSDK
-import Native.FireStore
+import Native.SDK.Firebase
+import Native.SDK.FireStore
 import Native.Firebase
 
 
@@ -22,8 +22,3 @@ type App
 initializeApp : Config -> App
 initializeApp config =
     Native.Firebase.initializeApp config
-
-
-callme : String -> String -> String -> App
-callme a b c =
-    Native.Firebase.callme a b c

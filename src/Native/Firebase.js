@@ -12,24 +12,59 @@ var _user$project$Native_Firebase = function() {
     })
   }
 
-  function onSnapshot(ref, send) {
+  function onDocSnapshot(path, sendMsg) {
     var db = firebase.firestore()
-    var path = ref._0
     db
       .doc(path)
       .onSnapshot(
-        doc => {
-          const elmSnapshot = {
+        function (doc) {
+          const documentSnapshot = {
             id: doc.id,
-            data:  doc.data()
+            data:  JSON.stringify(doc.data())
           }
-          _elm_lang$core$Native_Scheduler.rawSpawn(A2(send, "", elmSnapshot))
+          _elm_lang$core$Native_Scheduler.rawSpawn(A2(sendMsg, "", documentSnapshot))
+        })
+  }
+
+  function onCollectionSnapshot(queries, path, sendMsg) {
+    var db = firebase.firestore()
+    db
+      .collection(path)
+      .onSnapshot(
+        snapshot => {
+          const querySnapshot = {
+            changes: snapshot.docChanges.map(function(change) {
+              const doc = change.doc
+              const changeDoc = {
+                doc: {
+                  id: doc.id,
+                  data:  JSON.stringify(doc.data())
+                }
+              }
+
+              changeDoc['type_'] = {
+                  ctor: 'DocumentChangeType',
+                  value: change.type
+                }
+
+              return changeDoc
+              }),
+            data:  snapshot.docs.map(function (doc) {
+              return {
+                id: doc.id,
+                data:  JSON.stringify(doc.data())
+              }
+            })
+          }
+
+          _elm_lang$core$Native_Scheduler.rawSpawn(A2(sendMsg, "", querySnapshot))
         })
   }
 
   return {
     initializeApp: initializeApp,
-    onSnapshot: F2(onSnapshot)
+    onDocSnapshot: F2(onDocSnapshot),
+    onCollectionSnapshot: F3(onCollectionSnapshot)
   }
 }()
 

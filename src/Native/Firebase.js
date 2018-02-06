@@ -35,7 +35,7 @@ var _user$project$Native_Firebase = function() {
 
   function onCollectionSnapshot(queries, path, sendMsg) {
     var db = firebase.firestore()
-    var query = addQueries(queries, db.collection(path))
+    var query = addQueries(queries.table, db.collection(path))
     listeners[path] =
       query
         .onSnapshot(
@@ -70,8 +70,51 @@ var _user$project$Native_Firebase = function() {
   }
 
   function addQueries(queries, ref) {
-    console.log(queries)
-    return ref
+    if (queries.length === 0) {
+      return ref
+    }
+
+    const query = queries[0]
+
+    switch(query.ctor) {
+      case "Where":
+        ref = ref.where(query._0, opString(query._1.ctor), query._2)
+        break
+
+      case "Limit":
+        ref = ref.limit(query._0)
+        break
+
+      case "OrderBy":
+        ref = ref.orderBy(query._0, directionString(query._1.ctor))
+        break
+    }
+
+    return addQueries(queries.splice(1), ref)
+  }
+
+  function opString(op) {
+    switch(op) {
+      case "Gt":
+        return ">"
+      case "Gte":
+        return ">="
+      case "Eq":
+        return "=="
+      case "Lt":
+        return "<"
+      case "Lte":
+        return "<="
+    }
+  }
+
+  function directionString(direction) {
+    switch(direction) {
+      case "Asc":
+        return "asc"
+      case "Desc":
+        return "Desc"
+    }
   }
 
   return {

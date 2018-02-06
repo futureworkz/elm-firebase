@@ -43,6 +43,7 @@ effect module Firebase.FireStore
         , DocumentChange
         )
 
+import Array
 import Task exposing (Task)
 
 
@@ -356,7 +357,7 @@ createSub router sub state =
 
                     OnQuerySnapshot (Collection queries path) tagger ->
                         sendNewCollectionSnapshot router tagger
-                            |> Native.Firebase.onCollectionSnapshot queries path
+                            |> Native.Firebase.onCollectionSnapshot (Array.fromList queries) path
                             |> always newState
 
 

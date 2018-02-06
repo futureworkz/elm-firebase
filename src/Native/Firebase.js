@@ -1,6 +1,8 @@
 // TODO: Change to package name space when published
 // var _futureworkz$elm_firebase$Native_ElmFirebase = function() {
 var _user$project$Native_Firebase = function() {
+  const listeners = {}
+
   function initializeApp(config) {
     firebase.initializeApp({
       apiKey: config.apiKey,
@@ -12,9 +14,14 @@ var _user$project$Native_Firebase = function() {
     })
   }
 
+  function removeListener(path) {
+    const listener = listeners[path]
+    if (listener) listener()
+  }
+
   function onDocSnapshot(path, sendMsg) {
     var db = firebase.firestore()
-    db
+    listeners[path] = db
       .doc(path)
       .onSnapshot(
         function (doc) {
@@ -28,7 +35,7 @@ var _user$project$Native_Firebase = function() {
 
   function onCollectionSnapshot(queries, path, sendMsg) {
     var db = firebase.firestore()
-    db
+    listeners[path] = db
       .collection(path)
       .onSnapshot(
         snapshot => {
@@ -63,6 +70,7 @@ var _user$project$Native_Firebase = function() {
 
   return {
     initializeApp: initializeApp,
+    removeListener: removeListener,
     onDocSnapshot: F2(onDocSnapshot),
     onCollectionSnapshot: F3(onCollectionSnapshot)
   }

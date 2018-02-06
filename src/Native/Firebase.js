@@ -35,37 +35,43 @@ var _user$project$Native_Firebase = function() {
 
   function onCollectionSnapshot(queries, path, sendMsg) {
     var db = firebase.firestore()
-    listeners[path] = db
-      .collection(path)
-      .onSnapshot(
-        snapshot => {
-          const querySnapshot = {
-            changes: snapshot.docChanges.map(function(change) {
-              const doc = change.doc
-              const changeDoc = {
-                doc: {
+    var query = addQueries(queries, db.collection(path))
+    listeners[path] =
+      query
+        .onSnapshot(
+          snapshot => {
+            const querySnapshot = {
+              changes: snapshot.docChanges.map(function(change) {
+                const doc = change.doc
+                const changeDoc = {
+                  doc: {
+                    id: doc.id,
+                    data:  JSON.stringify(doc.data())
+                  }
+                }
+
+                changeDoc['type_'] = {
+                    ctor: 'DocumentChangeType',
+                    value: change.type
+                  }
+
+                return changeDoc
+                }),
+              data:  snapshot.docs.map(function (doc) {
+                return {
                   id: doc.id,
                   data:  JSON.stringify(doc.data())
                 }
-              }
+              })
+            }
 
-              changeDoc['type_'] = {
-                  ctor: 'DocumentChangeType',
-                  value: change.type
-                }
+            _elm_lang$core$Native_Scheduler.rawSpawn(A2(sendMsg, "", querySnapshot))
+          })
+  }
 
-              return changeDoc
-              }),
-            data:  snapshot.docs.map(function (doc) {
-              return {
-                id: doc.id,
-                data:  JSON.stringify(doc.data())
-              }
-            })
-          }
-
-          _elm_lang$core$Native_Scheduler.rawSpawn(A2(sendMsg, "", querySnapshot))
-        })
+  function addQueries(queries, ref) {
+    console.log(queries)
+    return ref
   }
 
   return {

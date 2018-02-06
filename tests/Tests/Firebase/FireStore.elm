@@ -1,4 +1,4 @@
-module Tests.Firebase.FireStore.Effect exposing (..)
+module Tests.Firebase.FireStore exposing (..)
 
 import Test exposing (..)
 import Expect exposing (..)

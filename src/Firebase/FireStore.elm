@@ -1,3 +1,23 @@
+{--
+TODO
+* Allow cancellation of subscription
+* Add queries to collection
+* Auth
+* Storage
+* Write docs/README
+
+Caveats:
+* State stores all subscriptions based on the Path as key.
+This means that user cannot subscribe to the same path with different queries.
+Design choice is made because we cannot differentiate between subscriptions other than Path.
+
+* All snapshot's data is sent back as JSON.
+This means user will have to decode their data.
+Design choice is made because our State cannot hold different types of subscription data
+and sending as JSON means that we enforce user to decode and maintain type safety.
+--}
+
+
 effect module Firebase.FireStore
     where { subscription = CreateSubMsg }
     exposing
@@ -205,8 +225,19 @@ onCollectionSnapshot tagger ref =
 
 
 
--- TODO: Cancel Subscriptions
--- Managing effects
+{--
+The code below are standard wiring required by effect manager.
+For effect manager to work, we need to tell it
+* a type (CreateSubMsg) to send when user wants to subscribe to something
+* a type (Msg) for internal usage with our own functions
+* a type (State) to hold all the information of our subscriptions
+
+Effect manager also requires the following functions to be defined:
+* init
+* subMap
+* onEffects
+* onSelfMsg
+--}
 
 
 type CreateSubMsg msg
@@ -249,6 +280,18 @@ onEffects router subs state =
             Task.succeed state
 
 
+onSelfMsg : Platform.Router msg (Msg msg) -> Msg msg -> State msg -> Task Never (State msg)
+onSelfMsg router msg state =
+    case msg of
+        NewDocSnapshot tagger snapshot ->
+            Platform.sendToApp router (tagger snapshot)
+                |> Task.andThen (always (Task.succeed state))
+
+        NewCollectionSnapshot tagger snapshot ->
+            Platform.sendToApp router (tagger snapshot)
+                |> Task.andThen (always (Task.succeed state))
+
+
 createSub : Platform.Router msg (Msg msg) -> CreateSubMsg msg -> State msg -> Task Never (State msg)
 createSub router sub state =
     case sub of
@@ -284,15 +327,3 @@ createSub router sub state =
                     in
                         Native.Firebase.onCollectionSnapshot queries path listener
                             |> always (Task.succeed newState)
-
-
-onSelfMsg : Platform.Router msg (Msg msg) -> Msg msg -> State msg -> Task Never (State msg)
-onSelfMsg router msg state =
-    case msg of
-        NewDocSnapshot tagger snapshot ->
-            Platform.sendToApp router (tagger snapshot)
-                |> Task.andThen (always (Task.succeed state))
-
-        NewCollectionSnapshot tagger snapshot ->
-            Platform.sendToApp router (tagger snapshot)
-                |> Task.andThen (always (Task.succeed state))

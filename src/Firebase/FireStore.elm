@@ -5,6 +5,7 @@ TODO
 * Auth
 * Storage
 * Write docs/README
+* Normalise path eg. /path//with//double/or/ending/
 
 Caveats:
 * State stores all subscriptions based on the Path as key.
@@ -41,6 +42,9 @@ effect module Firebase.FireStore
         , DocumentSnapshot
         , QuerySnapshot
         , DocumentChange
+        , Path
+        , FieldPath
+        , Json
         )
 
 import Array
@@ -49,7 +53,7 @@ import Task exposing (Task)
 
 type alias DocumentSnapshot =
     { id : String
-    , data : JsonString
+    , data : Json
     }
 
 
@@ -73,7 +77,7 @@ type alias FieldPath =
     String
 
 
-type alias JsonString =
+type alias Json =
     String
 
 

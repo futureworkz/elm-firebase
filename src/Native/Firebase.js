@@ -25,11 +25,7 @@ var _user$project$Native_Firebase = function() {
       .doc(path)
       .onSnapshot(
         function (doc) {
-          const documentSnapshot = {
-            id: doc.id,
-            data:  JSON.stringify(doc.data())
-          }
-          _elm_lang$core$Native_Scheduler.rawSpawn(A2(sendMsg, "", documentSnapshot))
+          _elm_lang$core$Native_Scheduler.rawSpawn(A2(sendMsg, "", elmDocSnapshot(doc)))
         })
   }
 
@@ -41,81 +37,30 @@ var _user$project$Native_Firebase = function() {
         .onSnapshot(
           snapshot => {
             const querySnapshot = {
-              changes: snapshot.docChanges.map(function(change) {
-                const doc = change.doc
-                const changeDoc = {
-                  doc: {
-                    id: doc.id,
-                    data:  JSON.stringify(doc.data())
-                  }
-                }
+              docs: _elm_lang$core$Native_List.fromArray(
+                snapshot.docs.map(elmDocSnapshot)
+              ),
 
-                changeDoc['type_'] = {
-                    ctor: 'DocumentChangeType',
-                    value: change.type
+              changes: _elm_lang$core$Native_List.fromArray(
+                snapshot.docChanges.map(function(change) {
+                  const changeDoc = {
+                    doc: elmDocSnapshot(change.doc)
                   }
 
-                return changeDoc
-                }),
-              data:  snapshot.docs.map(function (doc) {
-                return {
-                  id: doc.id,
-                  data:  JSON.stringify(doc.data())
-                }
-              })
+                  changeDoc['type_'] = {
+                      ctor: 'DocumentChangeType',
+                      value: change.type
+                    }
+
+                  return changeDoc
+                })
+              )
             }
 
             _elm_lang$core$Native_Scheduler.rawSpawn(A2(sendMsg, "", querySnapshot))
           })
   }
 
-  function addQueries(queries, ref) {
-    if (queries.length === 0) {
-      return ref
-    }
-
-    const query = queries[0]
-
-    switch(query.ctor) {
-      case "Where":
-        ref = ref.where(query._0, opString(query._1.ctor), query._2)
-        break
-
-      case "Limit":
-        ref = ref.limit(query._0)
-        break
-
-      case "OrderBy":
-        ref = ref.orderBy(query._0, directionString(query._1.ctor))
-        break
-    }
-
-    return addQueries(queries.splice(1), ref)
-  }
-
-  function opString(op) {
-    switch(op) {
-      case "Gt":
-        return ">"
-      case "Gte":
-        return ">="
-      case "Eq":
-        return "=="
-      case "Lt":
-        return "<"
-      case "Lte":
-        return "<="
-    }
-  }
-
-  function directionString(direction) {
-    switch(direction) {
-      case "Asc":
-        return "asc"
-      case "Desc":
-        return "Desc"
-    }
-  }
 
   return {
     initializeApp: initializeApp,
@@ -127,4 +72,59 @@ var _user$project$Native_Firebase = function() {
 
 function fromMaybe(maybe) {
   return maybe.ctor === 'Nothing' ? null : maybe._0;
+}
+
+function elmDocSnapshot(doc) {
+  return {
+    id: doc.id,
+    data:  JSON.stringify(doc.data())
+  }
+}
+
+function addQueries(queries, ref) {
+  if (queries.length === 0) {
+    return ref
+  }
+
+  const query = queries[0]
+
+  switch(query.ctor) {
+    case "Where":
+      ref = ref.where(query._0, opString(query._1.ctor), query._2)
+      break
+
+    case "Limit":
+      ref = ref.limit(query._0)
+      break
+
+    case "OrderBy":
+      ref = ref.orderBy(query._0, directionString(query._1.ctor))
+      break
+  }
+
+  return addQueries(queries.splice(1), ref)
+}
+
+function opString(op) {
+  switch(op) {
+    case "Gt":
+      return ">"
+    case "Gte":
+      return ">="
+    case "Eq":
+      return "=="
+    case "Lt":
+      return "<"
+    case "Lte":
+      return "<="
+  }
+}
+
+function directionString(direction) {
+  switch(direction) {
+    case "Asc":
+      return "asc"
+    case "Desc":
+      return "Desc"
+  }
 }

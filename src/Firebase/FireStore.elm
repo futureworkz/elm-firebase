@@ -43,7 +43,7 @@ effect module Firebase.FireStore
         , string
         , date
         , number_
-        , typeOf
+        , customValue
         , bool
         , docID
         , path
@@ -57,6 +57,7 @@ effect module Firebase.FireStore
         )
 
 import Array
+import Date
 import Task exposing (Task)
 import Native.FireStore
 
@@ -174,24 +175,24 @@ string =
     "String"
 
 
-date : String
+date : Date.Date
 date =
-    "Date"
+    Date.fromTime 0
 
 
-number_ : String
+number_ : number
 number_ =
-    "Number"
+    1
 
 
-bool : String
+bool : Bool
 bool =
-    "Boolean"
+    True
 
 
-typeOf : String -> String
-typeOf customType =
-    customType
+customValue : a -> a
+customValue a =
+    a
 
 
 

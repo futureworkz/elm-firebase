@@ -39,9 +39,18 @@ effect module Firebase.FireStore
         , eq
         , lt
         , lte
+        , listOf
+        , string
+        , date
+        , number_
+        , typeOf
+        , bool
+        , docID
+        , path
         , DocumentSnapshot
         , QuerySnapshot
         , DocumentChange
+        , ListOf
         , Path
         , FieldPath
         , Json
@@ -49,6 +58,7 @@ effect module Firebase.FireStore
 
 import Array
 import Task exposing (Task)
+import Native.FireStore
 
 
 type alias DocumentSnapshot =
@@ -67,10 +77,6 @@ type alias DocumentChange =
     { doc : DocumentSnapshot
     , type_ : DocumentChangeType
     }
-
-
-type alias Path =
-    String
 
 
 type alias FieldPath =
@@ -107,6 +113,14 @@ type Doc
     = Doc Path
 
 
+type Path
+    = Path String
+
+
+type ListOf a
+    = ListOf String a
+
+
 type DocumentChangeType
     = Added
     | Modified
@@ -130,6 +144,58 @@ type Op
     | Eq
     | Lt
     | Lte
+
+
+
+-- Schema helpers
+
+
+listOf : String -> a -> ListOf a
+listOf idDescription a =
+    ListOf idDescription a
+
+
+path : schema -> (schema -> b) -> Path
+path schema fields =
+    -- Force compiler to check path is valid
+    fields schema
+        |> always (Path (Native.FireStore.pathString fields))
+
+
+docID : String -> ListOf a -> a
+docID id collection =
+    case collection of
+        ListOf _ a ->
+            a
+
+
+string : String
+string =
+    "String"
+
+
+date : String
+date =
+    "Date"
+
+
+number_ : String
+number_ =
+    "Number"
+
+
+bool : String
+bool =
+    "Boolean"
+
+
+typeOf : String -> String
+typeOf customType =
+    customType
+
+
+
+-- Query helpers
 
 
 doc : Path -> Doc
@@ -313,7 +379,7 @@ removeSubs subs state =
         ( newState, removedPaths ) =
             List.partition isInSubPaths state
     in
-        List.map Native.Firebase.removeListeners removedPaths
+        List.map Native.FireStore.removeListener removedPaths
             |> always newState
 
 
@@ -356,12 +422,12 @@ createSub router sub state =
                 case sub of
                     OnDocSnapshot (Doc path) tagger ->
                         sendNewDocSnapshot router tagger
-                            |> Native.Firebase.onDocSnapshot path
+                            |> Native.FireStore.onDocSnapshot path
                             |> always newState
 
                     OnQuerySnapshot (Collection queries path) tagger ->
                         sendNewCollectionSnapshot router tagger
-                            |> Native.Firebase.onCollectionSnapshot (Array.fromList queries) path
+                            |> Native.FireStore.onCollectionSnapshot (Array.fromList queries) path
                             |> always newState
 
 

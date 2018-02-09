@@ -38,16 +38,13 @@ var _user$project$Native_FireStore = function() {
 
               changes: _elm_lang$core$Native_List.fromArray(
                 snapshot.docChanges.map(function(change) {
-                  const changeDoc = {
+                  const type = change.type
+                  const documentChangeType = type[0].toUpperCase() + type.slice(1)
+
+                  return {
+                    type_: { ctor: documentChangeType },
                     doc: elmDocSnapshot(change.doc)
                   }
-
-                  changeDoc['type_'] = {
-                      ctor: 'DocumentChangeType',
-                      value: change.type
-                    }
-
-                  return changeDoc
                 })
               )
             }

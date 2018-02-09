@@ -1,10 +1,20 @@
 // TODO: Change to package name space when published
 // var _futureworkz$elm_firebase$Native_FireStore = function() {
 var _user$project$Native_FireStore = function() {
+  // -- Query functions
+  function add(data, path) {
+    return _elm_lang$core$Native_Scheduler.nativeBinding(
+      function(callback) {
+        // WIP: To work on the conversion of the type into String for FireStore
+        console.log(data)
+        return callback(_elm_lang$core$Native_Scheduler.succeed(data))
+      }
+    )}
+
+  // -- Subscriptions functions
   const listeners = {}
 
   function removeListener(path) {
-    path = getPathValue(path)
     const listener = listeners[path]
     if (listener) {
       listener()
@@ -14,7 +24,6 @@ var _user$project$Native_FireStore = function() {
 
   function onDocSnapshot(path, sendMsg) {
     var db = firebase.firestore()
-    path = getPathValue(path)
     listeners[path] = db
       .doc(path)
       .onSnapshot(
@@ -25,7 +34,6 @@ var _user$project$Native_FireStore = function() {
 
   function onCollectionSnapshot(queries, path, sendMsg) {
     var db = firebase.firestore()
-    path = getPathValue(path)
     var query = addQueries(queries.table, db.collection(path))
     listeners[path] =
       query
@@ -86,6 +94,7 @@ var _user$project$Native_FireStore = function() {
   }
 
   return {
+    add: F2(add),
     removeListener: removeListener,
     onDocSnapshot: F2(onDocSnapshot),
     onCollectionSnapshot: F3(onCollectionSnapshot),
@@ -146,12 +155,4 @@ function directionString(direction) {
     case "Desc":
       return "Desc"
   }
-}
-
-function getPathValue(path) {
-  if (path.ctor !== 'Path') {
-    console.error("#getPathValue: Value is not of type Path")
-  }
-
-  return path._0
 }

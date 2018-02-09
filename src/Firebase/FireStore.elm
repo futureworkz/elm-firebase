@@ -26,6 +26,7 @@ effect module Firebase.FireStore
         , onCollectionSnapshot
         , doc
         , collection
+        , add
         , where_
         , orderBy
         , limit
@@ -47,6 +48,7 @@ effect module Firebase.FireStore
         , bool
         , docID
         , path
+        , serverTimestamp
         , DocumentSnapshot
         , QuerySnapshot
         , DocumentChange
@@ -93,8 +95,8 @@ type alias Json =
 
 
 type CreateSubMsg msg
-    = OnDocSnapshot Doc (DocumentSnapshot -> msg)
-    | OnQuerySnapshot Collection (QuerySnapshot -> msg)
+    = OnDocSnapshot PathString (DocumentSnapshot -> msg)
+    | OnQuerySnapshot PathString (List Query) (QuerySnapshot -> msg)
 
 
 type Msg msg
@@ -103,19 +105,23 @@ type Msg msg
 
 
 type alias State =
-    List Path
+    List PathString
 
 
-type Collection
-    = Collection (List Query) Path
+type Doc schema dataType
+    = Doc (Path schema dataType)
 
 
-type Doc
-    = Doc Path
+type Collection schema dataType
+    = Collection (List Query) (Path schema (ListOf dataType))
 
 
-type Path
-    = Path String
+type Path schema dataType
+    = Path schema (schema -> dataType) PathString
+
+
+type alias PathString =
+    String
 
 
 type ListOf a
@@ -156,11 +162,10 @@ listOf idDescription a =
     ListOf idDescription a
 
 
-path : schema -> (schema -> b) -> Path
+path : schema -> (schema -> dataType) -> Path schema dataType
 path schema fields =
-    -- Force compiler to check path is valid
-    fields schema
-        |> always (Path (Native.FireStore.pathString fields))
+    Path schema fields <|
+        Native.FireStore.pathString fields
 
 
 docID : String -> ListOf a -> a
@@ -168,6 +173,11 @@ docID id collection =
     case collection of
         ListOf _ a ->
             a
+
+
+serverTimestamp : Date.Date
+serverTimestamp =
+    Date.fromTime 0
 
 
 string : String
@@ -199,31 +209,39 @@ customValue a =
 -- Query helpers
 
 
-doc : Path -> Doc
+doc : Path schema dataType -> Doc schema dataType
 doc path =
     Doc path
 
 
-collection : Path -> Collection
+collection : Path schema (ListOf dataType) -> Collection schema dataType
 collection path =
     Collection [] path
 
 
-where_ : FieldPath -> Op -> String -> Collection -> Collection
+add : dataType -> Collection schema dataType -> Task Never Doc
+add data collection =
+    case collection of
+        Collection _ path ->
+            getPathString path
+                |> Native.FireStore.add data
+
+
+where_ : FieldPath -> Op -> String -> Collection schema dataType -> Collection schema dataType
 where_ fieldPath op value ref =
     case ref of
         Collection queries path ->
             Collection (queries ++ [ Where fieldPath op value ]) path
 
 
-orderBy : FieldPath -> Direction -> Collection -> Collection
+orderBy : FieldPath -> Direction -> Collection schema dataType -> Collection schema dataType
 orderBy fieldPath direction ref =
     case ref of
         Collection queries path ->
             Collection (queries ++ [ OrderBy fieldPath direction ]) path
 
 
-limit : Int -> Collection -> Collection
+limit : Int -> Collection schema dataType -> Collection schema dataType
 limit num ref =
     case ref of
         Collection queries path ->
@@ -299,14 +317,18 @@ lte =
 -- Create Subscriptions
 
 
-onDocSnapshot : (DocumentSnapshot -> msg) -> Doc -> Sub msg
-onDocSnapshot tagger ref =
-    subscription (OnDocSnapshot ref tagger)
+onDocSnapshot : (DocumentSnapshot -> msg) -> Doc schema dataType -> Sub msg
+onDocSnapshot tagger doc =
+    case doc of
+        Doc path ->
+            subscription (OnDocSnapshot (getPathString path) tagger)
 
 
-onCollectionSnapshot : (QuerySnapshot -> msg) -> Collection -> Sub msg
-onCollectionSnapshot tagger ref =
-    subscription (OnQuerySnapshot ref tagger)
+onCollectionSnapshot : (QuerySnapshot -> msg) -> Collection schema dataType -> Sub msg
+onCollectionSnapshot tagger collection =
+    case collection of
+        Collection queries path ->
+            subscription (OnQuerySnapshot (getPathString path) queries tagger)
 
 
 
@@ -333,11 +355,11 @@ init =
 subMap : (a -> b) -> CreateSubMsg a -> CreateSubMsg b
 subMap func sub =
     case sub of
-        OnDocSnapshot ref tagger ->
-            OnDocSnapshot ref (tagger >> func)
+        OnDocSnapshot pathString tagger ->
+            OnDocSnapshot pathString (tagger >> func)
 
-        OnQuerySnapshot ref tagger ->
-            OnQuerySnapshot ref (tagger >> func)
+        OnQuerySnapshot pathString queries tagger ->
+            OnQuerySnapshot pathString queries (tagger >> func)
 
 
 onEffects : Platform.Router msg (Msg msg) -> List (CreateSubMsg msg) -> State -> Task Never State
@@ -366,11 +388,11 @@ removeSubs subs state =
             List.map
                 (\sub ->
                     case sub of
-                        OnDocSnapshot (Doc path) _ ->
-                            path
+                        OnDocSnapshot pathString _ ->
+                            pathString
 
-                        OnQuerySnapshot (Collection _ path) _ ->
-                            path
+                        OnQuerySnapshot pathString _ _ ->
+                            pathString
                 )
                 subs
 
@@ -421,14 +443,14 @@ createSub router sub state =
                     subPath :: state
             in
                 case sub of
-                    OnDocSnapshot (Doc path) tagger ->
+                    OnDocSnapshot pathString tagger ->
                         sendNewDocSnapshot router tagger
-                            |> Native.FireStore.onDocSnapshot path
+                            |> Native.FireStore.onDocSnapshot pathString
                             |> always newState
 
-                    OnQuerySnapshot (Collection queries path) tagger ->
+                    OnQuerySnapshot pathString queries tagger ->
                         sendNewCollectionSnapshot router tagger
-                            |> Native.FireStore.onCollectionSnapshot (Array.fromList queries) path
+                            |> Native.FireStore.onCollectionSnapshot (Array.fromList queries) pathString
                             |> always newState
 
 
@@ -452,11 +474,18 @@ sendNewCollectionSnapshot router tagger _ snapshot =
     Platform.sendToSelf router (NewCollectionSnapshot tagger snapshot)
 
 
-getPathFromCreateSubMsg : CreateSubMsg msg -> Path
+getPathFromCreateSubMsg : CreateSubMsg msg -> PathString
 getPathFromCreateSubMsg msg =
     case msg of
-        OnDocSnapshot (Doc path) _ ->
-            path
+        OnDocSnapshot pathString _ ->
+            pathString
 
-        OnQuerySnapshot (Collection _ path) _ ->
+        OnQuerySnapshot pathString _ _ ->
+            pathString
+
+
+getPathString : Path schema fields -> PathString
+getPathString path =
+    case path of
+        Path _ _ path ->
             path

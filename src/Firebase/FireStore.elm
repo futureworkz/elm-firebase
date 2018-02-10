@@ -62,6 +62,7 @@ import Array
 import Date
 import Task exposing (Task)
 import Native.FireStore
+import Json.Encode as JE
 
 
 type alias DocumentSnapshot =
@@ -219,12 +220,12 @@ collection path =
     Collection [] path
 
 
-add : dataType -> Collection schema dataType -> Task Never Doc
-add data collection =
+add : (dataType -> JE.Value) -> dataType -> Collection schema dataType -> Task Never DocumentSnapshot
+add encoder data collection =
     case collection of
         Collection _ path ->
             getPathString path
-                |> Native.FireStore.add data
+                |> Native.FireStore.add (JE.encode 0 (encoder data))
 
 
 where_ : FieldPath -> Op -> String -> Collection schema dataType -> Collection schema dataType

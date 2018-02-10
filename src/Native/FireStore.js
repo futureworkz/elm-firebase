@@ -5,9 +5,21 @@ var _user$project$Native_FireStore = function() {
   function add(data, path) {
     return _elm_lang$core$Native_Scheduler.nativeBinding(
       function(callback) {
-        // WIP: To work on the conversion of the type into String for FireStore
-        console.log(data)
-        return callback(_elm_lang$core$Native_Scheduler.succeed(data))
+        var db = firebase.firestore()
+        data = JSON.parse(data)
+        db.collection(path)
+          .add(data)
+          .then(function(docRef) {
+            const doc = {
+              id: docRef.id,
+              data: JSON.stringify(data)
+            }
+            return callback(_elm_lang$core$Native_Scheduler.succeed(doc))
+          })
+          .catch(function(error) {
+            // TODO: Not handled by elm yet
+            return callback(_elm_lang$core$Native_Scheduler.fail(error.message))
+          })
       }
     )}
 

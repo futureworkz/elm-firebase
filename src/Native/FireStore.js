@@ -7,19 +7,23 @@ var _user$project$Native_FireStore = function() {
       function(callback) {
         var db = firebase.firestore()
         data = JSON.parse(data)
-        db.collection(path)
-          .add(data)
-          .then(function(docRef) {
-            const doc = {
-              id: docRef.id,
-              data: JSON.stringify(data)
-            }
-            return callback(_elm_lang$core$Native_Scheduler.succeed(doc))
-          })
-          .catch(function(error) {
-            // TODO: Not handled by elm yet
-            return callback(_elm_lang$core$Native_Scheduler.fail(error.message))
-          })
+
+        try {
+          db.collection(path)
+            .add(data) // add may throw an exception "invalid-argument" instead of rejecting
+            .then(function(docRef) {
+              const doc = {
+                id: docRef.id,
+                data: JSON.stringify(data)
+              }
+              return callback(_elm_lang$core$Native_Scheduler.succeed(doc))
+            })
+            .catch(function(error) {
+              return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+            })
+        } catch (error) {
+          return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+        }
       }
     )}
 
@@ -119,6 +123,55 @@ function elmDocSnapshot(doc) {
     id: doc.id,
     data:  JSON.stringify(doc.data())
   }
+}
+
+function elmFireStoreError(error) {
+  var fireStoreErrorCode = function() {
+    switch (error.code) {
+      case "cancelled":
+        return "Cancelled"
+      case "unknown":
+        return "Unknown"
+      case "invalid-argument":
+        return "InvalidArgument"
+      case "deadline-exceeded":
+        return "DeadlineExceeded"
+      case "not-found":
+        return "NotFound"
+      case "already-exists":
+        return "AlreadyExists"
+      case "permission-denied":
+        return "PermissionDenied"
+      case "resource-exhausted":
+        return "ResourceExhausted"
+      case "failed-precondition":
+        return "FailedPrecondition"
+      case "aborted":
+        return "Aborted"
+      case "out-of-range":
+        return "OutOfRange"
+      case "unimplemented":
+        return "Unimplemented"
+      case "internal":
+        return "Internal"
+      case "unavailable":
+        return "Unavailable"
+      case "data-loss":
+        return "DataLoss"
+      case "unauthenticated":
+        return "Unauthenticated"
+
+      default: 
+        return "UndocumentedErrorByElmFirebase"
+    }
+  }()
+
+  return {
+    ctor: "FireStoreError",
+    _0 : { ctor: fireStoreErrorCode },
+    _1 : error.message
+  }
+
 }
 
 function addQueries(queries, ref) {

@@ -52,6 +52,8 @@ effect module Firebase.FireStore
         , DocumentSnapshot
         , QuerySnapshot
         , DocumentChange
+        , Error(Error)
+        , ErrorCode(..)
         , ListOf
         , Path
         , FieldPath
@@ -89,6 +91,30 @@ type alias FieldPath =
 
 type alias Json =
     String
+
+
+type Error
+    = Error ErrorCode String
+
+
+type ErrorCode
+    = Cancelled
+    | Unknown
+    | InvalidArgument
+    | DeadlineExceeded
+    | NotFound
+    | AlreadyExists
+    | PermissionDenied
+    | ResourceExhausted
+    | FailedPrecondition
+    | Aborted
+    | OutOfRange
+    | Unimplemented
+    | Internal
+    | Unavailable
+    | DataLoss
+    | Unauthenticated
+    | UndocumentedErrorByElmFirebase
 
 
 
@@ -220,7 +246,7 @@ collection path =
     Collection [] path
 
 
-add : (dataType -> JE.Value) -> dataType -> Collection schema dataType -> Task Never DocumentSnapshot
+add : (dataType -> JE.Value) -> dataType -> Collection schema dataType -> Task Error DocumentSnapshot
 add encoder data collection =
     case collection of
         Collection _ path ->

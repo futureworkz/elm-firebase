@@ -48,7 +48,7 @@ effect module Firebase.FireStore
         , bool
         , docID
         , path
-        , serverTimestamp
+        , encodedServerTimeStamp
         , DocumentSnapshot
         , QuerySnapshot
         , DocumentChange
@@ -202,9 +202,9 @@ docID id collection =
             a
 
 
-serverTimestamp : Date.Date
-serverTimestamp =
-    Date.fromTime 0
+encodedServerTimeStamp : JE.Value
+encodedServerTimeStamp =
+    JE.string "ELM-FIREBASE::ENCODED-SERVER-TIME-STAMP"
 
 
 string : String

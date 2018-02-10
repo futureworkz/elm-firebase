@@ -6,7 +6,7 @@ var _user$project$Native_FireStore = function() {
     return _elm_lang$core$Native_Scheduler.nativeBinding(
       function(callback) {
         var db = firebase.firestore()
-        data = JSON.parse(data)
+        data = replaceSpecialPlaceHolder(JSON.parse(data))
 
         try {
           db.collection(path)
@@ -77,6 +77,7 @@ var _user$project$Native_FireStore = function() {
           })
   }
 
+  // -- Helpers
   function pathString(fields) {
     /***
      * Hackish function to generate the full path based on fields
@@ -171,7 +172,22 @@ function elmFireStoreError(error) {
     _0 : { ctor: fireStoreErrorCode },
     _1 : error.message
   }
+}
 
+function replaceSpecialPlaceHolder(data) {
+  if (typeof data === 'object') {
+    Object.keys(data).forEach(function(key) {
+      if (data[key] === 'ELM-FIREBASE::ENCODED-SERVER-TIME-STAMP') {
+        data[key] = firebase.firestore.FieldValue.serverTimestamp()
+      } else if (typeof data[key] === 'object') {
+        data[key] = replaceSpecialPlaceHolder(data[key])
+      }
+    })
+
+    return data
+  } else {
+    return data
+  }
 }
 
 function addQueries(queries, ref) {

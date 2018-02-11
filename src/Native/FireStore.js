@@ -1,7 +1,29 @@
 // TODO: Change to package name space when published
 // var _futureworkz$elm_firebase$Native_FireStore = function() {
 var _user$project$Native_FireStore = function() {
-  // -- Query functions
+  // -- Doc functions
+  function update(data, path) {
+    return _elm_lang$core$Native_Scheduler.nativeBinding(
+      function(callback) {
+        var db = firebase.firestore()
+        data = replaceSpecialPlaceHolder(JSON.parse(data))
+
+        try {
+          db.doc(path)
+            .update(data) // add may throw an exception "invalid-argument" instead of rejecting
+            .then(function() {
+              return callback(_elm_lang$core$Native_Scheduler.succeed(Utils.Tuple0))
+            })
+            .catch(function(error) {
+              return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+            })
+        } catch (error) {
+          return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+        }
+      }
+    )}
+
+  // -- Collection functions
   function add(data, path) {
     return _elm_lang$core$Native_Scheduler.nativeBinding(
       function(callback) {

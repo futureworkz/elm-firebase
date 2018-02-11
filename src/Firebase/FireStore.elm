@@ -25,6 +25,7 @@ effect module Firebase.FireStore
         ( onDocSnapshot
         , onCollectionSnapshot
         , doc
+        , unsafeUpdate
         , collection
         , add
         , where_
@@ -239,6 +240,14 @@ customValue a =
 doc : Path schema dataType -> Doc schema dataType
 doc path =
     Doc path
+
+
+unsafeUpdate : (a -> JE.Value) -> a -> Doc schema dataType -> Task Error ()
+unsafeUpdate encoder data doc =
+    case doc of
+        Doc path ->
+            getPathString path
+                |> Native.FireStore.update (JE.encode 0 (encoder data))
 
 
 collection : Path schema (ListOf dataType) -> Collection schema dataType

@@ -17,8 +17,8 @@ This means user will have to decode their data.
 Design choice is made because our State cannot hold different types of subscription data
 and sending as JSON means that we enforce user to decode and maintain type safety.
 
-* db.doc.update() does not support multipath update
-It is actually more like set() becase it does not allows partial updating of an object
+* db.doc.update() does not support multipath update because FireStore does not have multipath update anymore (use batch)
+It is actually more like set() becase it does not allows partial updating of a record
 though user can workaround it by passing a limited encoder
 --}
 
@@ -30,6 +30,10 @@ effect module Firebase.FireStore
         , onCollectionSnapshot
         , doc
         , update
+        , batch
+        , batchSet
+        , batchUpdate
+        , batchDelete
         , collection
         , add
         , where_
@@ -54,6 +58,7 @@ effect module Firebase.FireStore
         , docID
         , path
         , encodedServerTimeStamp
+        , generateID
         , DocumentSnapshot
         , QuerySnapshot
         , DocumentChange
@@ -147,6 +152,12 @@ type alias State =
 
 type Doc schema dataType
     = Doc (Path schema dataType)
+
+
+type WriteBatch
+    = BatchSet Json PathString
+    | BatchUpdate Json PathString
+    | BatchDelete PathString
 
 
 type Collection schema dataType
@@ -243,7 +254,7 @@ customValue a =
 
 
 
--- Query helpers
+-- Document functions
 
 
 doc : Path schema dataType -> Doc schema dataType
@@ -257,6 +268,50 @@ update objEncoder data doc =
         Doc path ->
             getPathString path
                 |> Native.FireStore.update (encodeToJson objEncoder data)
+
+
+batch : List WriteBatch -> Task Error ()
+batch operations =
+    let
+        toJSArray operation =
+            case operation of
+                BatchSet json path ->
+                    { ops = "Set", json = json, path = path }
+
+                BatchUpdate json path ->
+                    { ops = "Update", json = json, path = path }
+
+                BatchDelete path ->
+                    { ops = "Delete", json = "", path = path }
+    in
+        List.map toJSArray operations
+            |> Array.fromList
+            |> Native.FireStore.batchAndCommit
+
+
+batchSet : ObjectEncoder dataType -> dataType -> Doc schema dataType -> WriteBatch
+batchSet objEncoder data doc =
+    case doc of
+        Doc path ->
+            BatchSet (encodeToJson objEncoder data) <| getPathString path
+
+
+batchUpdate : ObjectEncoder dataType -> dataType -> Doc schema dataType -> WriteBatch
+batchUpdate objEncoder data doc =
+    case doc of
+        Doc path ->
+            BatchUpdate (encodeToJson objEncoder data) <| getPathString path
+
+
+batchDelete : ObjectEncoder dataType -> dataType -> Doc schema dataType -> WriteBatch
+batchDelete objEncoder data doc =
+    case doc of
+        Doc path ->
+            BatchDelete <| getPathString path
+
+
+
+-- Collection functions
 
 
 collection : Path schema (ListOf dataType) -> Collection schema dataType
@@ -356,6 +411,11 @@ lt =
 lte : Op
 lte =
     Lte
+
+
+generateID : Task x String
+generateID =
+    Native.FireStore.generateID ()
 
 
 

@@ -23,6 +23,50 @@ var _user$project$Native_FireStore = function() {
       }
     )}
 
+  function batchAndCommit(operations) {
+    return _elm_lang$core$Native_Scheduler.nativeBinding(
+      function(callback) {
+        const db = firebase.firestore()
+        const batch = db.batch()
+
+        try {
+          operations.table.forEach(
+            function(operation) {
+              if (operation.ops === 'Set') {
+                batch.set(
+                  db.doc(operation.path),
+                  replaceSpecialPlaceHolder(JSON.parse(operation.json))
+                )
+              } else if (operation.ops === 'Update') {
+                batch.update(
+                  db.doc(operation.path),
+                  replaceSpecialPlaceHolder(JSON.parse(operation.json))
+                )
+              } else if (operation.ops === 'Delete') {
+                batch.delete(
+                  db.doc(operation.path)
+                )
+              } else {
+                // do nothing for invalid ops
+                console.error("elm-firebase: Invalid ops in batchAndCommit == " + operation.ops)
+              }
+            }
+          )
+
+          batch.commit()
+            .then(function() {
+              return callback(_elm_lang$core$Native_Scheduler.succeed(Utils.Tuple0))
+            })
+            .catch(function(error) {
+              return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+            })
+        } catch (error) {
+          return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+        }
+      }
+    )
+  }
+
   // -- Collection functions
   function add(data, path) {
     return _elm_lang$core$Native_Scheduler.nativeBinding(
@@ -132,13 +176,24 @@ var _user$project$Native_FireStore = function() {
     return path
   }
 
+  function generateID() {
+    return _elm_lang$core$Native_Scheduler.nativeBinding(
+      function(callback) {
+        const id = firebase.firestore().collection('/.SHOULD.NOT.EXISTS').doc().id
+        return callback(_elm_lang$core$Native_Scheduler.succeed(id))
+      }
+    )
+  }
+
   return {
     add: F2(add),
     update: F2(update),
+    batchAndCommit: batchAndCommit,
     removeListener: removeListener,
     onDocSnapshot: F2(onDocSnapshot),
     onCollectionSnapshot: F3(onCollectionSnapshot),
-    pathString: pathString
+    pathString: pathString,
+    generateID: generateID
   }
 }()
 

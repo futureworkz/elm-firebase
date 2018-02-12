@@ -134,6 +134,7 @@ var _user$project$Native_FireStore = function() {
 
   return {
     add: F2(add),
+    update: F2(update),
     removeListener: removeListener,
     onDocSnapshot: F2(onDocSnapshot),
     onCollectionSnapshot: F3(onCollectionSnapshot),

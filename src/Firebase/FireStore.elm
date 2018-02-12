@@ -1,11 +1,9 @@
 {--
 TODO
-* Allow cancellation of subscription
-* Add queries to collection
+* Finish all queries to collection
 * Auth
 * Storage
 * Write docs/README
-* Normalise path eg. /path//with//double/or/ending/
 
 Caveats:
 * State stores all subscriptions based on the Path as key.

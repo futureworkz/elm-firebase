@@ -16,6 +16,10 @@ Design choice is made because we cannot differentiate between subscriptions othe
 This means user will have to decode their data.
 Design choice is made because our State cannot hold different types of subscription data
 and sending as JSON means that we enforce user to decode and maintain type safety.
+
+* db.doc.update() does not support multipath update
+It is actually more like set() becase it does not allows partial updating of an object
+though user can workaround it by passing a limited encoder
 --}
 
 
@@ -25,7 +29,7 @@ effect module Firebase.FireStore
         ( onDocSnapshot
         , onCollectionSnapshot
         , doc
-        , unsafeUpdate
+        , update
         , collection
         , add
         , where_
@@ -59,6 +63,7 @@ effect module Firebase.FireStore
         , Path
         , FieldPath
         , Json
+        , ObjectEncoder
         )
 
 import Array
@@ -92,6 +97,10 @@ type alias FieldPath =
 
 type alias Json =
     String
+
+
+type alias ObjectEncoder dataType =
+    List ( String, dataType -> JE.Value )
 
 
 type Error
@@ -203,8 +212,8 @@ docID id collection =
             a
 
 
-encodedServerTimeStamp : JE.Value
-encodedServerTimeStamp =
+encodedServerTimeStamp : a -> JE.Value
+encodedServerTimeStamp _ =
     JE.string "ELM-FIREBASE::ENCODED-SERVER-TIME-STAMP"
 
 
@@ -242,12 +251,12 @@ doc path =
     Doc path
 
 
-unsafeUpdate : (a -> JE.Value) -> a -> Doc schema dataType -> Task Error ()
-unsafeUpdate encoder data doc =
+update : ObjectEncoder dataType -> dataType -> Doc schema dataType -> Task Error ()
+update objEncoder data doc =
     case doc of
         Doc path ->
             getPathString path
-                |> Native.FireStore.update (JE.encode 0 (encoder data))
+                |> Native.FireStore.update (encodeToJson objEncoder data)
 
 
 collection : Path schema (ListOf dataType) -> Collection schema dataType
@@ -255,12 +264,12 @@ collection path =
     Collection [] path
 
 
-add : (dataType -> JE.Value) -> dataType -> Collection schema dataType -> Task Error DocumentSnapshot
-add encoder data collection =
+add : ObjectEncoder dataType -> dataType -> Collection schema dataType -> Task Error DocumentSnapshot
+add objEncoder data collection =
     case collection of
         Collection _ path ->
             getPathString path
-                |> Native.FireStore.add (JE.encode 0 (encoder data))
+                |> Native.FireStore.add (encodeToJson objEncoder data)
 
 
 where_ : FieldPath -> Op -> String -> Collection schema dataType -> Collection schema dataType
@@ -347,6 +356,23 @@ lt =
 lte : Op
 lte =
     Lte
+
+
+
+--- Helpers
+
+
+encodeToJson : ObjectEncoder dataType -> dataType -> String
+encodeToJson objectEncoder data =
+    objectEncoder
+        |> List.map (applyFieldEncoder data)
+        |> JE.object
+        |> JE.encode 0
+
+
+applyFieldEncoder : dataType -> ( String, dataType -> JE.Value ) -> ( String, JE.Value )
+applyFieldEncoder data ( fieldName, encoder ) =
+    ( fieldName, encoder data )
 
 
 

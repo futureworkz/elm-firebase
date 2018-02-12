@@ -262,10 +262,7 @@ doc path =
 
 update : ObjectEncoder dataType -> dataType -> Doc schema dataType -> Task Error ()
 update objEncoder data doc =
-    case doc of
-        Doc path ->
-            getPathString path
-                |> Native.FireStore.update (encodeToJson objEncoder data)
+    Native.FireStore.update (encodeToJson objEncoder data) <| getDocPathString doc
 
 
 batch : List WriteBatch -> Task Error ()
@@ -289,23 +286,17 @@ batch operations =
 
 batchSet : ObjectEncoder dataType -> dataType -> Doc schema dataType -> WriteBatch
 batchSet objEncoder data doc =
-    case doc of
-        Doc path ->
-            BatchSet (encodeToJson objEncoder data) <| getPathString path
+    BatchSet (encodeToJson objEncoder data) <| getDocPathString doc
 
 
 batchUpdate : ObjectEncoder dataType -> dataType -> Doc schema dataType -> WriteBatch
 batchUpdate objEncoder data doc =
-    case doc of
-        Doc path ->
-            BatchUpdate (encodeToJson objEncoder data) <| getPathString path
+    BatchUpdate (encodeToJson objEncoder data) <| getDocPathString doc
 
 
 batchDelete : ObjectEncoder dataType -> dataType -> Doc schema dataType -> WriteBatch
 batchDelete objEncoder data doc =
-    case doc of
-        Doc path ->
-            BatchDelete <| getPathString path
+    BatchDelete <| getDocPathString doc
 
 
 
@@ -319,10 +310,7 @@ collection path =
 
 add : ObjectEncoder dataType -> dataType -> Collection schema dataType -> Task Error DocumentSnapshot
 add objEncoder data collection =
-    case collection of
-        Collection _ path ->
-            getPathString path
-                |> Native.FireStore.add (encodeToJson objEncoder data)
+    Native.FireStore.add (encodeToJson objEncoder data) <| getCollectionPathString collection
 
 
 where_ : FieldPath -> Op -> String -> Collection schema dataType -> Collection schema dataType
@@ -414,23 +402,6 @@ lte =
 generateID : Task x String
 generateID =
     Native.FireStore.generateID ()
-
-
-
---- Helpers
-
-
-encodeToJson : ObjectEncoder dataType -> dataType -> String
-encodeToJson objectEncoder data =
-    objectEncoder
-        |> List.map (applyFieldEncoder data)
-        |> JE.object
-        |> JE.encode 0
-
-
-applyFieldEncoder : dataType -> ( String, dataType -> JE.Value ) -> ( String, JE.Value )
-applyFieldEncoder data ( fieldName, encoder ) =
-    ( fieldName, encoder data )
 
 
 
@@ -594,6 +565,23 @@ sendNewCollectionSnapshot router tagger _ snapshot =
     Platform.sendToSelf router (NewCollectionSnapshot tagger snapshot)
 
 
+
+--- Helpers
+
+
+encodeToJson : ObjectEncoder dataType -> dataType -> String
+encodeToJson objectEncoder data =
+    objectEncoder
+        |> List.map (applyFieldEncoder data)
+        |> JE.object
+        |> JE.encode 0
+
+
+applyFieldEncoder : dataType -> ( String, dataType -> JE.Value ) -> ( String, JE.Value )
+applyFieldEncoder data ( fieldName, encoder ) =
+    ( fieldName, encoder data )
+
+
 getPathFromCreateSubMsg : CreateSubMsg msg -> PathString
 getPathFromCreateSubMsg msg =
     case msg of
@@ -602,6 +590,20 @@ getPathFromCreateSubMsg msg =
 
         OnQuerySnapshot pathString _ _ ->
             pathString
+
+
+getDocPathString : Doc schema dataType -> PathString
+getDocPathString doc =
+    case doc of
+        Doc path ->
+            getPathString path
+
+
+getCollectionPathString : Collection schema dataType -> PathString
+getCollectionPathString collection =
+    case collection of
+        Collection _ path ->
+            getPathString path
 
 
 getPathString : Path schema fields -> PathString

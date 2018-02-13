@@ -210,15 +210,12 @@ listOf idDescription a =
 
 path : schema -> (schema -> dataType) -> Path schema dataType
 path schema fields =
-    Path schema fields <|
-        Native.FireStore.pathString fields
+    Path schema fields <| Native.FireStore.pathString fields
 
 
 docID : String -> ListOf a -> a
-docID id collection =
-    case collection of
-        ListOf _ a ->
-            a
+docID _ (ListOf _ a) =
+    a
 
 
 encodedServerTimeStamp : a -> JE.Value
@@ -268,7 +265,7 @@ update objEncoder data doc =
 batch : List WriteBatch -> Task Error ()
 batch operations =
     let
-        toJSArray operation =
+        toObject operation =
             case operation of
                 BatchSet json path ->
                     { ops = "Set", json = json, path = path }
@@ -279,7 +276,7 @@ batch operations =
                 BatchDelete path ->
                     { ops = "Delete", json = "", path = path }
     in
-        List.map toJSArray operations
+        List.map toObject operations
             |> Array.fromList
             |> Native.FireStore.batchAndCommit
 
@@ -314,24 +311,18 @@ add objEncoder data collection =
 
 
 where_ : FieldPath -> Op -> String -> Collection schema dataType -> Collection schema dataType
-where_ fieldPath op value ref =
-    case ref of
-        Collection queries path ->
-            Collection (queries ++ [ Where fieldPath op value ]) path
+where_ fieldPath op value (Collection queries path) =
+    Collection (queries ++ [ Where fieldPath op value ]) path
 
 
 orderBy : FieldPath -> Direction -> Collection schema dataType -> Collection schema dataType
-orderBy fieldPath direction ref =
-    case ref of
-        Collection queries path ->
-            Collection (queries ++ [ OrderBy fieldPath direction ]) path
+orderBy fieldPath direction (Collection queries path) =
+    Collection (queries ++ [ OrderBy fieldPath direction ]) path
 
 
 limit : Int -> Collection schema dataType -> Collection schema dataType
-limit num ref =
-    case ref of
-        Collection queries path ->
-            Collection (queries ++ [ Limit num ]) path
+limit num (Collection queries path) =
+    Collection (queries ++ [ Limit num ]) path
 
 
 isAdded : DocumentChangeType -> Bool
@@ -409,17 +400,13 @@ generateID =
 
 
 onDocSnapshot : (DocumentSnapshot -> msg) -> Doc schema dataType -> Sub msg
-onDocSnapshot tagger doc =
-    case doc of
-        Doc path ->
-            subscription (OnDocSnapshot (getPathString path) tagger)
+onDocSnapshot tagger (Doc path) =
+    subscription <| OnDocSnapshot (getPathString path) tagger
 
 
 onCollectionSnapshot : (QuerySnapshot -> msg) -> Collection schema dataType -> Sub msg
-onCollectionSnapshot tagger collection =
-    case collection of
-        Collection queries path ->
-            subscription (OnQuerySnapshot (getPathString path) queries tagger)
+onCollectionSnapshot tagger (Collection queries path) =
+    subscription <| OnQuerySnapshot (getPathString path) queries tagger
 
 
 
@@ -476,16 +463,7 @@ removeSubs : List (CreateSubMsg msg) -> State -> State
 removeSubs subs state =
     let
         subPaths =
-            List.map
-                (\sub ->
-                    case sub of
-                        OnDocSnapshot pathString _ ->
-                            pathString
-
-                        OnQuerySnapshot pathString _ _ ->
-                            pathString
-                )
-                subs
+            List.map getPathFromCreateSubMsg subs
 
         isInSubPaths =
             \path -> List.member path subPaths
@@ -593,21 +571,15 @@ getPathFromCreateSubMsg msg =
 
 
 getDocPathString : Doc schema dataType -> PathString
-getDocPathString doc =
-    case doc of
-        Doc path ->
-            getPathString path
+getDocPathString (Doc path) =
+    getPathString path
 
 
 getCollectionPathString : Collection schema dataType -> PathString
-getCollectionPathString collection =
-    case collection of
-        Collection _ path ->
-            getPathString path
+getCollectionPathString (Collection _ path) =
+    getPathString path
 
 
 getPathString : Path schema fields -> PathString
-getPathString path =
-    case path of
-        Path _ _ path ->
-            path
+getPathString (Path _ _ path) =
+    path

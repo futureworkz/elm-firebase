@@ -1,5 +1,5 @@
 effect module Firebase.Auth
-    where { subscription = CreateSubMsg }
+    where { subscription = SubMsg }
     exposing
         ( onAuthStateChanged
         , User
@@ -9,85 +9,79 @@ import Task exposing (Task)
 
 
 type alias User =
-    JsonString
-
-
-type alias JsonString =
-    String
+    { displayName : String
+    , uid : String
+    , email : String
+    , emailVerified : Bool
+    , photoURL : String
+    , isAnonymous : Bool
+    }
 
 
 
 -- Create Subscriptions
 
 
-onAuthStateChanged : (Maybe User -> msg) -> Sub msg
-onAuthStateChanged tagger =
-    subscription (OnAuthStateChanged "authStateChanged" tagger)
-
-
-type CreateSubMsg msg
-    = OnAuthStateChanged Event (Maybe User -> msg)
+type SubMsg msg
+    = OnAuthStateChanged (Maybe User -> msg)
 
 
 type Msg msg
-    = AuthStateChanged (Maybe User -> msg) (Maybe User)
+    = AuthStateChanged (Maybe User)
 
 
-type alias State =
-    List Event
+type alias State msg =
+    List (SubMsg msg)
 
 
-type alias Event =
-    String
-
-
-init : Task Never State
+init : Task Never (State msg)
 init =
     Task.succeed []
 
 
-subMap : (a -> b) -> CreateSubMsg a -> CreateSubMsg b
+onAuthStateChanged : (Maybe User -> msg) -> Sub msg
+onAuthStateChanged tagger =
+    subscription (OnAuthStateChanged tagger)
+
+
+subMap : (a -> b) -> SubMsg a -> SubMsg b
 subMap func sub =
     case sub of
-        OnAuthStateChanged event tagger ->
-            OnAuthStateChanged event (tagger >> func)
+        OnAuthStateChanged tagger ->
+            OnAuthStateChanged (tagger >> func)
 
 
-onEffects : Platform.Router msg (Msg msg) -> List (CreateSubMsg msg) -> State -> Task Never State
+onEffects : Platform.Router msg (Msg msg) -> List (SubMsg msg) -> State msg -> Task Never (State msg)
 onEffects router subs state =
-    case subs of
+    case List.isEmpty state of
+        True ->
+            let
+                listener =
+                    \_ snapshot ->
+                        Platform.sendToSelf router (AuthStateChanged snapshot)
+            in
+                Native.Firebase.onAuthStateChanged listener
+                    |> always (Task.succeed subs)
+
+        False ->
+            Task.succeed subs
+
+
+onSelfMsg : Platform.Router msg (Msg msg) -> Msg msg -> State msg -> Task Never (State msg)
+onSelfMsg router msg state =
+    case msg of
+        AuthStateChanged snapshot ->
+            sendUserDataToApp router snapshot state state
+
+
+sendUserDataToApp : Platform.Router msg (Msg msg) -> Maybe User -> State msg -> State msg -> Task Never (State msg)
+sendUserDataToApp router snapshot rest state =
+    case rest of
         sub :: rest ->
-            createSub router sub state
-                |> Task.andThen (onEffects router rest)
+            case sub of
+                OnAuthStateChanged tagger ->
+                    Platform.sendToApp router (tagger snapshot)
+                        |> Task.andThen (always (sendUserDataToApp router snapshot rest state))
 
         [] ->
             Task.succeed state
-
-
-onSelfMsg : Platform.Router msg (Msg msg) -> Msg msg -> State -> Task Never State
-onSelfMsg router msg state =
-    case msg of
-        AuthStateChanged tagger snapshot ->
-            Platform.sendToApp router (tagger snapshot)
-                |> Task.andThen (always (Task.succeed state))
-
-
-createSub : Platform.Router msg (Msg msg) -> CreateSubMsg msg -> State -> Task Never State
-createSub router sub state =
-    case sub of
-        OnAuthStateChanged event tagger ->
-            case List.member event state of
-                True ->
-                    Task.succeed state
-
-                False ->
-                    let
-                        listener =
-                            \_ snapshot ->
-                                Platform.sendToSelf router (AuthStateChanged tagger snapshot)
-
-                        newState =
-                            event :: state
-                    in
-                        Native.Firebase.onAuthStateChanged listener
-                            |> always (Task.succeed newState)

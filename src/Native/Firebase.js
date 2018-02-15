@@ -13,12 +13,9 @@ var _user$project$Native_Firebase = function() {
   }
 
   function onAuthStateChanged(sendMsg) {
-    var firebaseAuth = firebase.auth()
-    firebaseAuth.onAuthStateChanged(user => {
+    firebase.auth().onAuthStateChanged(user => {
       if (user) {
-        const { uid, email, emailVerified, displayName } = user
-        const data = JSON.stringify({ uid, email, emailVerified, displayName })
-        _elm_lang$core$Native_Scheduler.rawSpawn(A2(sendMsg, "", _elm_lang$core$Maybe$Just(data)))
+        _elm_lang$core$Native_Scheduler.rawSpawn(A2(sendMsg, "", _elm_lang$core$Maybe$Just(user)))
       } else {
         _elm_lang$core$Native_Scheduler.rawSpawn(A2(sendMsg, "", _elm_lang$core$Maybe$Nothing ))
       }

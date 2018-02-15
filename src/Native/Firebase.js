@@ -12,11 +12,18 @@ var _user$project$Native_Firebase = function() {
     })
   }
 
+  let unsubscribeAuth = null
   function onAuthStateChanged(sendMsg) {
-    firebase.auth().onAuthStateChanged(user => {
+    if (unsubscribeAuth) unsubscribeAuth()
+
+    // TODO: This function is not triggering
+    // Steven thinks it could be because of the different firebase app initialization
+    unsubscribeAuth = firebase.auth().onAuthStateChanged(user => {
       if (user) {
+        console.log("Fire sendToSelf with user")
         _elm_lang$core$Native_Scheduler.rawSpawn(A2(sendMsg, "", _elm_lang$core$Maybe$Just(user)))
       } else {
+        console.log("Fire sendToSelf with nothing")
         _elm_lang$core$Native_Scheduler.rawSpawn(A2(sendMsg, "", _elm_lang$core$Maybe$Nothing ))
       }
     })

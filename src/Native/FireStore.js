@@ -2,6 +2,27 @@
 // var _futureworkz$elm_firebase$Native_FireStore = function() {
 var _user$project$Native_FireStore = function() {
   // -- Doc functions
+  function set(data, path) {
+    return _elm_lang$core$Native_Scheduler.nativeBinding(
+      function(callback) {
+        var db = firebase.firestore()
+        data = replaceSpecialPlaceHolder(JSON.parse(data))
+
+        try {
+          db.doc(path)
+            .set(data)
+            .then(function(snapshot) {
+              return callback(_elm_lang$core$Native_Scheduler.succeed())
+            })
+            .catch(function(error) {
+              return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+            })
+        } catch (error) {
+          return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+        }
+      }
+    )}
+
   function update(data, path) {
     return _elm_lang$core$Native_Scheduler.nativeBinding(
       function(callback) {
@@ -92,6 +113,7 @@ var _user$project$Native_FireStore = function() {
         }
       }
     )}
+  
 
   // -- Subscriptions functions
   const listeners = {}
@@ -186,6 +208,7 @@ var _user$project$Native_FireStore = function() {
   }
 
   return {
+    set: F2(set),
     add: F2(add),
     update: F2(update),
     batchAndCommit: batchAndCommit,

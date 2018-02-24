@@ -1,93 +1,146 @@
 effect module Firebase.Auth
-    where { subscription = CreateSubMsg }
+    where { subscription = SubMsg }
     exposing
-        ( onAuthStateChanged
+        ( logIn
+        , logOut
+        , forgetPassword
+        , updatePassword
+        , register
+        , onAuthStateChanged
         , User
+        , ResponseError
         )
 
+import Native.Auth
 import Task exposing (Task)
 
 
+type alias ResponseError =
+    { code : String
+    , message : String
+    }
+
+
+type alias LoginParams =
+    { email : String
+    , password : String
+    }
+
+
+type alias UpdatePasswordParams =
+    { oldPassword : String
+    , newPassword : String
+    }
+
+
+type alias RegisterParams =
+    { displayName : String
+    , email : Email
+    , photoURL : String
+    , password : String
+    }
+
+
 type alias User =
-    JsonString
+    { displayName : String
+    , uid : String
+    , email : Email
+    , emailVerified : Bool
+    , photoURL : String
+    , isAnonymous : Bool
+    }
 
 
-type alias JsonString =
+type alias Email =
     String
+
+
+logIn : LoginParams -> Task ResponseError User
+logIn params =
+    Native.Auth.logIn params
+
+
+logOut : Task ResponseError ()
+logOut =
+    Native.Auth.logOut ()
+
+
+forgetPassword : Email -> Task ResponseError ()
+forgetPassword email =
+    Native.Auth.forgetPassword email
+
+
+updatePassword : UpdatePasswordParams -> Task ResponseError ()
+updatePassword params =
+    Native.Auth.updatePassword params
+
+
+register : RegisterParams -> Task ResponseError User
+register params =
+    Native.Auth.register params
 
 
 
 -- Create Subscriptions
 
 
+type SubMsg msg
+    = OnAuthStateChanged (Maybe User -> msg)
+
+
+type Msg
+    = AuthStateChanged (Maybe User)
+
+
+type State msg
+    = Uninitialized
+    | Initialized (List (SubMsg msg))
+
+
+init : Task Never (State msg)
+init =
+    Task.succeed Uninitialized
+
+
 onAuthStateChanged : (Maybe User -> msg) -> Sub msg
 onAuthStateChanged tagger =
-    subscription (OnAuthStateChanged "authStateChanged" tagger)
+    subscription (OnAuthStateChanged tagger)
 
 
-type CreateSubMsg msg
-    = OnAuthStateChanged Event (Maybe User -> msg)
+subMap : (a -> b) -> SubMsg a -> SubMsg b
+subMap func (OnAuthStateChanged tagger) =
+    OnAuthStateChanged (tagger >> func)
 
 
-type Msg msg
-    = AuthStateChanged (Maybe User -> msg) (Maybe User)
-
-
-type alias State =
-    List Event
-
-
-type alias Event =
-    String
-
-
-init : Task Never State
-init =
-    Task.succeed []
-
-
-subMap : (a -> b) -> CreateSubMsg a -> CreateSubMsg b
-subMap func sub =
-    case sub of
-        OnAuthStateChanged event tagger ->
-            OnAuthStateChanged event (tagger >> func)
-
-
-onEffects : Platform.Router msg (Msg msg) -> List (CreateSubMsg msg) -> State -> Task Never State
+onEffects : Platform.Router msg Msg -> List (SubMsg msg) -> State msg -> Task Never (State msg)
 onEffects router subs state =
-    case subs of
-        sub :: rest ->
-            createSub router sub state
-                |> Task.andThen (onEffects router rest)
+    case state of
+        Uninitialized ->
+            let
+                listener =
+                    \_ user ->
+                        Platform.sendToSelf router (AuthStateChanged user)
+            in
+                Native.Auth.onAuthStateChanged listener
+                    |> always (Task.succeed <| Initialized subs)
 
-        [] ->
+        Initialized _ ->
+            Task.succeed (Initialized subs)
+
+
+onSelfMsg : Platform.Router msg Msg -> Msg -> State msg -> Task Never (State msg)
+onSelfMsg router (AuthStateChanged user) state =
+    case state of
+        Uninitialized ->
             Task.succeed state
 
-
-onSelfMsg : Platform.Router msg (Msg msg) -> Msg msg -> State -> Task Never State
-onSelfMsg router msg state =
-    case msg of
-        AuthStateChanged tagger snapshot ->
-            Platform.sendToApp router (tagger snapshot)
-                |> Task.andThen (always (Task.succeed state))
+        Initialized subs ->
+            List.map (sendUserDataToApp router user) subs
+                |> Task.sequence
+                |> Task.andThen (always <| Task.succeed state)
 
 
-createSub : Platform.Router msg (Msg msg) -> CreateSubMsg msg -> State -> Task Never State
-createSub router sub state =
-    case sub of
-        OnAuthStateChanged event tagger ->
-            case List.member event state of
-                True ->
-                    Task.succeed state
-
-                False ->
-                    let
-                        listener =
-                            \_ snapshot ->
-                                Platform.sendToSelf router (AuthStateChanged tagger snapshot)
-
-                        newState =
-                            event :: state
-                    in
-                        Native.Firebase.onAuthStateChanged listener
-                            |> always (Task.succeed newState)
+sendUserDataToApp : Platform.Router msg Msg -> Maybe User -> SubMsg msg -> Task x ()
+sendUserDataToApp router user (OnAuthStateChanged tagger) =
+    -- Platform.sendToApp will trigger onEffects again
+    Platform.sendToApp router (tagger user)

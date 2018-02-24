@@ -27,6 +27,7 @@ effect module Firebase.FireStore
         ( onDocSnapshot
         , onCollectionSnapshot
         , doc
+        , set
         , update
         , batch
         , batchSet
@@ -255,6 +256,11 @@ customValue a =
 doc : Path schema dataType -> Doc schema dataType
 doc path =
     Doc path
+
+
+set : ObjectEncoder dataType -> dataType -> Doc schema dataType -> Task Error ()
+set objEncoder data doc =
+    Native.FireStore.set (encodeToJson objEncoder data) <| getDocPathString doc
 
 
 update : ObjectEncoder dataType -> dataType -> Doc schema dataType -> Task Error ()

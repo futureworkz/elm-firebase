@@ -120,7 +120,7 @@ var _user$project$Native_FireStore = function() {
     listeners[path] =
       query
         .onSnapshot(
-          snapshot => {
+          function (snapshot) {
             const querySnapshot = {
               docs: _elm_lang$core$Native_List.fromArray(
                 snapshot.docs.map(elmDocSnapshot)

@@ -115,7 +115,7 @@ var _user$project$Native_FireStore = function() {
     )}  
 
   // -- Subscriptions functions
-  const listeners = {}
+  var listeners = {}
 
   function removeListener(path) {
     const listener = listeners[path]

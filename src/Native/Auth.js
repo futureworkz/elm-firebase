@@ -100,7 +100,7 @@ var _user$project$Native_Auth = function() {
         .then(function(firebaseUser){
           return firebaseUser
             .updateProfile({ displayName: displayName, photoURL: photoURL })
-            .then(_ => firebaseUser)
+            .then(function(_) { return firebaseUser })
         })
         .then(function(data){
           const user = dataToUser(data)
@@ -116,7 +116,7 @@ var _user$project$Native_Auth = function() {
     })
   }
 
-  let unsubscribeAuth = null
+  var unsubscribeAuth = null
   function onAuthStateChanged(sendMsg) {
     if (unsubscribeAuth) unsubscribeAuth()
 

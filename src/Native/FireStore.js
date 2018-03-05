@@ -33,7 +33,7 @@ var _user$project$Native_FireStore = function() {
           db.doc(path)
             .update(data) // add may throw an exception "invalid-argument" instead of rejecting
             .then(function() {
-              return callback(_elm_lang$core$Native_Scheduler.succeed(Utils.Tuple0))
+              return callback(_elm_lang$core$Native_Scheduler.succeed())
             })
             .catch(function(error) {
               return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
@@ -76,7 +76,7 @@ var _user$project$Native_FireStore = function() {
 
           batch.commit()
             .then(function() {
-              return callback(_elm_lang$core$Native_Scheduler.succeed(Utils.Tuple0))
+              return callback(_elm_lang$core$Native_Scheduler.succeed())
             })
             .catch(function(error) {
               return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
@@ -112,8 +112,7 @@ var _user$project$Native_FireStore = function() {
           return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
         }
       }
-    )}
-  
+    )}  
 
   // -- Subscriptions functions
   const listeners = {}

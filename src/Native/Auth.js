@@ -62,6 +62,7 @@ var _user$project$Native_Auth = function() {
       const user = firebase.auth().currentUser
 
       if (user == null) {
+        // Todo: User error like FireStore
         return callback(
           _elm_lang$core$Native_Scheduler.fail({
             code: 'auth/user-not-login',
@@ -119,9 +120,7 @@ var _user$project$Native_Auth = function() {
   function onAuthStateChanged(sendMsg) {
     if (unsubscribeAuth) unsubscribeAuth()
 
-    // TODO: This function is not triggering
-    // Steven thinks it could be because of the different firebase app initialization
-    // Cannot just past back the user like that, need to create a proper record
+    // TODO: 
     // Prevent first fired - Iker need to do
     unsubscribeAuth = firebase.auth().onAuthStateChanged(function(data) {
       if (data) {

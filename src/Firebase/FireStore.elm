@@ -49,6 +49,7 @@ effect module Firebase.FireStore
         , lt
         , lte
         , listOf
+        , listString
         , string
         , date
         , number_
@@ -227,6 +228,11 @@ encodedServerTimeStamp _ =
 string : String
 string =
     "String"
+
+
+listString : List String
+listString =
+    []
 
 
 date : Date.Date

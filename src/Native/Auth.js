@@ -5,9 +5,9 @@ var _user$project$Native_Auth = function() {
     return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback) {
       firebase.auth()
         .signInWithEmailAndPassword(email, password)
-        .then(function(snapshot) {
+        .then(function(user) {
           return callback(
-            _elm_lang$core$Native_Scheduler.succeed(toUserType(snapshot.user))
+            _elm_lang$core$Native_Scheduler.succeed(toUserType(user))
           )
         })
         .catch(function(error) {
@@ -92,6 +92,18 @@ var _user$project$Native_Auth = function() {
     })
   }
 
+  function sendEmailVerification() {
+    return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback) {
+      firebase.auth().currentUser.sendEmailVerification()
+        .then(function() {
+          return callback( _elm_lang$core$Native_Scheduler.succeed())
+        })
+        .catch(function(error) {
+          return callback( _elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+        })
+    })
+  }
+
   var unsubscribeAuth = null
   function onAuthStateChanged(sendMsg) {
     if (unsubscribeAuth) unsubscribeAuth()
@@ -125,6 +137,7 @@ var _user$project$Native_Auth = function() {
     updatePassword: updatePassword,
     updateProfile: F2(updateProfile),
     createUserWithEmailAndPassword: F2(createUserWithEmailAndPassword),
+    sendEmailVerification: sendEmailVerification,
     onAuthStateChanged: onAuthStateChanged
   }
 }()

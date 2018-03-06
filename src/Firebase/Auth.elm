@@ -8,6 +8,7 @@ effect module Firebase.Auth
         , updatePassword
         , updateProfile
         , createUserWithEmailAndPassword
+        , sendEmailVerification
         , onAuthStateChanged
         , User
         , Error(Error)
@@ -98,6 +99,11 @@ updateProfile displayName photoURL =
 createUserWithEmailAndPassword : Email -> Password -> Task Error User
 createUserWithEmailAndPassword email password =
     Native.Auth.createUserWithEmailAndPassword email password
+
+
+sendEmailVerification : Task Error ()
+sendEmailVerification =
+    Native.Auth.sendEmailVerification ()
 
 
 

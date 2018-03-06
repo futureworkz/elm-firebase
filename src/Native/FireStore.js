@@ -193,7 +193,12 @@ var _user$project$Native_FireStore = function() {
       }
     })
 
+    // Collect the path
     fields(schemaProxy)
+
+    // Release the memory
+    _user$project$Firebase_FireStore$docID = oldDocID
+
     return path
   }
 

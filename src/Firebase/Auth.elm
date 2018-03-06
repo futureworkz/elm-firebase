@@ -1,44 +1,42 @@
 effect module Firebase.Auth
     where { subscription = SubMsg }
     exposing
-        ( logIn
-        , logOut
-        , forgetPassword
+        ( signInWithEmailAndPassword
+        , signInAndRetrieveDataWithEmailAndPassword
+        , signOut
+        , sendPasswordResetEmail
         , updatePassword
-        , register
+        , updateProfile
+        , createUserWithEmailAndPassword
         , onAuthStateChanged
         , User
-        , ResponseError
+        , Error(Error)
+        , ErrorCode(..)
         )
 
 import Native.Auth
 import Task exposing (Task)
 
 
-type alias ResponseError =
-    { code : String
-    , message : String
-    }
+type Error
+    = Error ErrorCode String
 
 
-type alias LoginParams =
-    { email : String
-    , password : String
-    }
-
-
-type alias UpdatePasswordParams =
-    { oldPassword : String
-    , newPassword : String
-    }
-
-
-type alias RegisterParams =
-    { displayName : String
-    , email : Email
-    , photoURL : String
-    , password : String
-    }
+type ErrorCode
+    = InvalidEmail
+    | UserDisabled
+    | UserNotFound
+    | WrongPassword
+    | MissingAndroidPkgName
+    | MissingContinueUri
+    | MissingIosBundleID
+    | InvalidContinueUri
+    | UnauthorizedContinueUri
+    | WeakPassword
+    | RequiresRecentLogin
+    | EmailAlreadyInUse
+    | OperationNotAllowed
+    | UndocumentedErrorByElmFirebase
 
 
 type alias User =
@@ -55,29 +53,51 @@ type alias Email =
     String
 
 
-logIn : LoginParams -> Task ResponseError User
-logIn params =
-    Native.Auth.logIn params
+type alias Password =
+    String
 
 
-logOut : Task ResponseError ()
-logOut =
-    Native.Auth.logOut ()
+type alias DisplayName =
+    String
 
 
-forgetPassword : Email -> Task ResponseError ()
-forgetPassword email =
-    Native.Auth.forgetPassword email
+type alias PhotoURL =
+    String
 
 
-updatePassword : UpdatePasswordParams -> Task ResponseError ()
-updatePassword params =
-    Native.Auth.updatePassword params
+signInWithEmailAndPassword : Email -> Password -> Task Error User
+signInWithEmailAndPassword email password =
+    Native.Auth.signInWithEmailAndPassword email password
 
 
-register : RegisterParams -> Task ResponseError User
-register params =
-    Native.Auth.register params
+signInAndRetrieveDataWithEmailAndPassword : Email -> Password -> Task Error User
+signInAndRetrieveDataWithEmailAndPassword email password =
+    Native.Auth.signInAndRetrieveDataWithEmailAndPassword email password
+
+
+signOut : Task Error ()
+signOut =
+    Native.Auth.signOut ()
+
+
+sendPasswordResetEmail : Email -> Task Error ()
+sendPasswordResetEmail email =
+    Native.Auth.sendPasswordResetEmail email
+
+
+updatePassword : Password -> Task Error ()
+updatePassword password =
+    Native.Auth.updatePassword password
+
+
+updateProfile : DisplayName -> PhotoURL -> Task Error ()
+updateProfile displayName photoURL =
+    Native.Auth.updateProfile displayName photoURL
+
+
+createUserWithEmailAndPassword : Email -> Password -> Task Error User
+createUserWithEmailAndPassword email password =
+    Native.Auth.createUserWithEmailAndPassword email password
 
 
 

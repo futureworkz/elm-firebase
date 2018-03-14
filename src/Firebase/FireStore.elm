@@ -77,7 +77,6 @@ import Date exposing (Date)
 import Task exposing (Task)
 import Native.FireStore
 import Json.Encode as JE
-import Helpers exposing (monthToInt)
 
 
 type alias DocumentSnapshot =
@@ -229,26 +228,13 @@ encodedServerTimeStamp _ =
 
 encodeDate : Date -> JE.Value
 encodeDate date =
-    -- Firebase date string: 2018-03-14T04:24:19.770Z
     let
         format int =
             String.padLeft 2 '0' (toString int)
     in
         JE.string <|
-            toString (Date.year date)
-                ++ "-"
-                ++ format (monthToInt <| Date.month date)
-                ++ "-"
-                ++ format (Date.day date)
-                ++ "T"
-                ++ format (Date.hour date)
-                ++ ":"
-                ++ format (Date.minute date)
-                ++ ":"
-                ++ format (Date.second date)
-                ++ "."
-                ++ format (Date.millisecond date)
-                ++ "Z"
+            "ELM-FIREBASE::ENCODED-DATE|"
+                ++ (toString <| Date.toTime date)
 
 
 string : String

@@ -60,6 +60,8 @@ effect module Firebase.FireStore
         , encodedServerTimeStamp
         , encodeDate
         , generateID
+        , Collection
+        , Doc
         , DocumentSnapshot
         , QuerySnapshot
         , DocumentChange

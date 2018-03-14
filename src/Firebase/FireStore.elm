@@ -58,6 +58,7 @@ effect module Firebase.FireStore
         , docID
         , path
         , encodedServerTimeStamp
+        , encodeDate
         , generateID
         , DocumentSnapshot
         , QuerySnapshot
@@ -72,10 +73,11 @@ effect module Firebase.FireStore
         )
 
 import Array
-import Date
+import Date exposing (Date)
 import Task exposing (Task)
 import Native.FireStore
 import Json.Encode as JE
+import Helpers exposing (monthToInt)
 
 
 type alias DocumentSnapshot =
@@ -223,6 +225,30 @@ docID _ (ListOf _ a) =
 encodedServerTimeStamp : a -> JE.Value
 encodedServerTimeStamp _ =
     JE.string "ELM-FIREBASE::ENCODED-SERVER-TIME-STAMP"
+
+
+encodeDate : Date -> JE.Value
+encodeDate date =
+    -- Firebase date string: 2018-03-14T04:24:19.770Z
+    let
+        format int =
+            String.padLeft 2 '0' (toString int)
+    in
+        JE.string <|
+            toString (Date.year date)
+                ++ "-"
+                ++ format (monthToInt <| Date.month date)
+                ++ "-"
+                ++ format (Date.day date)
+                ++ "T"
+                ++ format (Date.hour date)
+                ++ ":"
+                ++ format (Date.minute date)
+                ++ ":"
+                ++ format (Date.second date)
+                ++ "."
+                ++ format (Date.millisecond date)
+                ++ "Z"
 
 
 string : String

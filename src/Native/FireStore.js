@@ -282,12 +282,17 @@ function elmFireStoreError(error) {
 function replaceSpecialPlaceHolder(data) {
   if (typeof data === 'object') {
     Object.keys(data).forEach(function(key) {
-      if (data[key] === 'ELM-FIREBASE::ENCODED-SERVER-TIME-STAMP') {
-        data[key] = firebase.firestore.FieldValue.serverTimestamp()
-      } else if (data[key].startsWith('ELM-FIREBASE::ENCODED-DATE|')) {
-        data[key] = new Date(data[key].split('|')[1])
+      var value = data[key]
+      if (typeof value === 'string') {
+        if (value === 'ELM-FIREBASE::ENCODED-SERVER-TIME-STAMP') {
+          data[key] = firebase.firestore.FieldValue.serverTimestamp()
+        } else if (value.startsWith('ELM-FIREBASE::ENCODED-DATE|')) {
+          data[key] = new Date(parseInt(value.split('|')[1]))
+        }
       } else if (typeof data[key] === 'object') {
         data[key] = replaceSpecialPlaceHolder(data[key])
+      } else {
+        // do nothing
       }
     })
 

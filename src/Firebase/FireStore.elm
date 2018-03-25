@@ -52,6 +52,7 @@ effect module Firebase.FireStore
         , listString
         , string
         , date
+        , timestamp
         , number_
         , customValue
         , bool
@@ -76,6 +77,7 @@ effect module Firebase.FireStore
 
 import Array
 import Date exposing (Date)
+import Time exposing (Time)
 import Task exposing (Task)
 import Native.FireStore
 import Json.Encode as JE
@@ -252,6 +254,11 @@ listString =
 date : Date.Date
 date =
     Date.fromTime 0
+
+
+timestamp : Time
+timestamp =
+    Date.toTime <| Date.fromTime 0
 
 
 number_ : number

@@ -29,6 +29,7 @@ effect module Firebase.FireStore
         , doc
         , set
         , update
+        , delete
         , batch
         , batchSet
         , batchUpdate
@@ -293,6 +294,11 @@ set objEncoder data doc =
 update : ObjectEncoder dataType -> dataType -> Doc schema dataType -> Task Error ()
 update objEncoder data doc =
     Native.FireStore.update (encodeToJson objEncoder data) <| getDocPathString doc
+
+
+delete : Doc schema dataType -> Task Error ()
+delete doc =
+    Native.FireStore.delete_ <| getDocPathString doc
 
 
 batch : List WriteBatch -> Task Error ()

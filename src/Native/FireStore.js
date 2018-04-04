@@ -44,6 +44,26 @@ var _user$project$Native_FireStore = function() {
       }
     )}
 
+  function delete_(path) {
+    return _elm_lang$core$Native_Scheduler.nativeBinding(
+      function(callback) {
+        var db = firebase.firestore()
+
+        try {
+          db.doc(path)
+            .delete() 
+            .then(function() {
+              return callback(_elm_lang$core$Native_Scheduler.succeed())
+            })
+            .catch(function(error) {
+              return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+            })
+        } catch (error) {
+          return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+        }
+      }
+    )}
+
   function batchAndCommit(operations) {
     return _elm_lang$core$Native_Scheduler.nativeBinding(
       function(callback) {
@@ -215,6 +235,7 @@ var _user$project$Native_FireStore = function() {
     set: F2(set),
     add: F2(add),
     update: F2(update),
+    delete_: delete_,
     batchAndCommit: batchAndCommit,
     removeListener: removeListener,
     onDocSnapshot: F2(onDocSnapshot),

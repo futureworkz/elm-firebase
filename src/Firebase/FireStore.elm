@@ -28,6 +28,7 @@ effect module Firebase.FireStore
         , onCollectionSnapshot
         , doc
         , set
+        , getCollection
         , update
         , delete
         , batch
@@ -342,6 +343,11 @@ batchDelete objEncoder data doc =
 collection : Path schema (ListOf dataType) -> Collection schema dataType
 collection path =
     Collection [] path
+
+
+getCollection : Collection schema dataType -> Task Error (List DocumentSnapshot)
+getCollection doc =
+    Native.FireStore.getCollection <| getCollectionPathString doc
 
 
 add : ObjectEncoder dataType -> dataType -> Collection schema dataType -> Task Error DocumentSnapshot

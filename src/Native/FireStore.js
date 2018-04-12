@@ -109,6 +109,35 @@ var _user$project$Native_FireStore = function() {
   }
 
   // -- Collection functions
+  function getCollection(path) {
+    return _elm_lang$core$Native_Scheduler.nativeBinding(
+      function(callback) {
+        var db = firebase.firestore()
+        
+        try {
+          db.collection(path)
+            .get()
+            .then(function(querySnapshot) {
+              const docs = []
+              querySnapshot.forEach(function(doc) {
+                docs.push({
+                  id: doc.id,
+                  data: JSON.stringify(doc.data())
+                })
+              })
+              return callback(_elm_lang$core$Native_Scheduler.succeed(
+                _elm_lang$core$Native_List.fromArray(docs)
+              ))
+            })
+            .catch(function(error) {
+              return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+            })
+        } catch (error) {
+          return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+        }
+      }
+    )}  
+
   function add(data, path) {
     return _elm_lang$core$Native_Scheduler.nativeBinding(
       function(callback) {
@@ -232,6 +261,7 @@ var _user$project$Native_FireStore = function() {
   }
 
   return {
+    getCollection: getCollection,
     set: F2(set),
     add: F2(add),
     update: F2(update),

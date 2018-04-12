@@ -52,6 +52,7 @@ effect module Firebase.FireStore
         , lte
         , listOf
         , listString
+        , listObject
         , string
         , date
         , timestamp
@@ -250,6 +251,11 @@ string =
 
 listString : List String
 listString =
+    []
+
+
+listObject : a -> List a
+listObject a =
     []
 
 

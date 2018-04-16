@@ -3,6 +3,7 @@ effect module Firebase.Auth
     exposing
         ( signInWithEmailAndPassword
         , signInAndRetrieveDataWithEmailAndPassword
+        , signInAnonymously
         , signOut
         , sendPasswordResetEmail
         , updatePassword
@@ -74,6 +75,11 @@ signInWithEmailAndPassword email password =
 signInAndRetrieveDataWithEmailAndPassword : Email -> Password -> Task Error User
 signInAndRetrieveDataWithEmailAndPassword email password =
     Native.Auth.signInAndRetrieveDataWithEmailAndPassword email password
+
+
+signInAnonymously : Task Never User
+signInAnonymously =
+    Native.Auth.signInAnonymously ()
 
 
 signOut : Task Error ()

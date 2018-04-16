@@ -30,6 +30,18 @@ var _user$project$Native_Auth = function() {
     })
   }
 
+  function signInAnonymously() {
+    return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback) {
+      firebase.auth().signInAnonymously().then(function(user) {
+        return callback( _elm_lang$core$Native_Scheduler.succeed(toUserType(user)))
+      }).catch(function(error) {
+        // The only possible error is OperationNotAllowed which means developer
+        // has not enabled anonymous sign in in Firebase Auth Console
+        console.error(error)
+      })
+    })
+  }
+
   function signOut() {
     return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback) {
       firebase.auth().signOut().then(function() {
@@ -132,6 +144,7 @@ var _user$project$Native_Auth = function() {
   return {
     signInWithEmailAndPassword: F2(signInWithEmailAndPassword),
     signInAndRetrieveDataWithEmailAndPassword: F2(signInAndRetrieveDataWithEmailAndPassword),
+    signInAnonymously: signInAnonymously,
     signOut: signOut,
     sendPasswordResetEmail: sendPasswordResetEmail,
     updatePassword: updatePassword,

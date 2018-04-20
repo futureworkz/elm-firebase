@@ -2,6 +2,34 @@
 // var _futureworkz$elm_firebase$Native_FireStore = function() {
 var _user$project$Native_FireStore = function() {
   // -- Doc functions
+  function get(path) {
+    return _elm_lang$core$Native_Scheduler.nativeBinding(
+      function(callback) {
+        var db = firebase.firestore()
+        
+        try {
+          db.doc(path)
+            .get()
+            .then(function(doc) {
+              if (doc.exists) {
+                return callback(_elm_lang$core$Native_Scheduler.succeed(
+                  elmDocSnapshot(doc)
+                ))
+              } else {
+                return callback(_elm_lang$core$Native_Scheduler.fail(
+                  elmFireStoreError({code: "doc-not-found"})
+                ))
+              }
+            })
+            .catch(function(error) {
+              return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+            })
+        } catch (error) {
+          return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+        }
+      }
+    )}  
+
   function set(data, path) {
     return _elm_lang$core$Native_Scheduler.nativeBinding(
       function(callback) {
@@ -120,10 +148,7 @@ var _user$project$Native_FireStore = function() {
             .then(function(querySnapshot) {
               const docs = []
               querySnapshot.forEach(function(doc) {
-                docs.push({
-                  id: doc.id,
-                  data: JSON.stringify(doc.data())
-                })
+                docs.push(elmDocSnapshot(doc))
               })
               return callback(_elm_lang$core$Native_Scheduler.succeed(
                 _elm_lang$core$Native_List.fromArray(docs)
@@ -148,11 +173,7 @@ var _user$project$Native_FireStore = function() {
           db.collection(path)
             .add(data) // add may throw an exception "invalid-argument" instead of rejecting
             .then(function(docRef) {
-              const doc = {
-                id: docRef.id,
-                data: JSON.stringify(data)
-              }
-              return callback(_elm_lang$core$Native_Scheduler.succeed(doc))
+              return callback(_elm_lang$core$Native_Scheduler.succeed(docRef.id))
             })
             .catch(function(error) {
               return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
@@ -185,12 +206,15 @@ var _user$project$Native_FireStore = function() {
   }
 
   function onCollectionSnapshot(queries, path, sendMsg) {
+    onCollectionSnapshotWithOptions(queries, { includeDocumentMetadataChanges: false, includeQueryMetadataChanges: false }, path, sendMsg)
+  }
+
+  function onCollectionSnapshotWithOptions(queries, options, path, sendMsg) {
     var db = firebase.firestore()
     var query = addQueries(queries.table, db.collection(path))
     listeners[path] =
       query
-        .onSnapshot(
-          function (snapshot) {
+        .onSnapshot(options, function (snapshot) {
             const querySnapshot = {
               docs: _elm_lang$core$Native_List.fromArray(
                 snapshot.docs.map(elmDocSnapshot)
@@ -262,6 +286,7 @@ var _user$project$Native_FireStore = function() {
 
   return {
     getCollection: getCollection,
+    get: get,
     set: F2(set),
     add: F2(add),
     update: F2(update),
@@ -270,6 +295,7 @@ var _user$project$Native_FireStore = function() {
     removeListener: removeListener,
     onDocSnapshot: F2(onDocSnapshot),
     onCollectionSnapshot: F3(onCollectionSnapshot),
+    onCollectionSnapshotWithOptions: F4(onCollectionSnapshotWithOptions),
     pathString: pathString,
     generateID: generateID
   }
@@ -278,7 +304,8 @@ var _user$project$Native_FireStore = function() {
 function elmDocSnapshot(doc) {
   return {
     id: doc.id,
-    data:  JSON.stringify(doc.data())
+    data: JSON.stringify(doc.data()),
+    metadata: doc.metadata
   }
 }
 
@@ -317,6 +344,8 @@ function elmFireStoreError(error) {
         return "DataLoss"
       case "unauthenticated":
         return "Unauthenticated"
+      case "doc-not-found":
+        return "DocumentNotFound"
 
       default: 
         return "UndocumentedErrorByElmFirebase"

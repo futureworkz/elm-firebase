@@ -26,8 +26,10 @@ effect module Firebase.FireStore
     exposing
         ( onDocSnapshot
         , onCollectionSnapshot
+        , onCollectionSnapshotWithOptions
         , doc
         , set
+        , get
         , getCollection
         , update
         , delete
@@ -68,6 +70,7 @@ effect module Firebase.FireStore
         , Doc
         , DocumentSnapshot
         , QuerySnapshot
+        , QueryListenOptions
         , DocumentChange
         , Error(Error)
         , ErrorCode(..)
@@ -76,6 +79,7 @@ effect module Firebase.FireStore
         , FieldPath
         , Json
         , ObjectEncoder
+        , DocID
         )
 
 import Array
@@ -89,12 +93,25 @@ import Json.Encode as JE
 type alias DocumentSnapshot =
     { id : String
     , data : Json
+    , metadata : DocumentMetadata
+    }
+
+
+type alias DocumentMetadata =
+    { fromCache : Bool
+    , hasPendingWrites : Bool
     }
 
 
 type alias QuerySnapshot =
     { changes : List DocumentChange
     , docs : List DocumentSnapshot
+    }
+
+
+type alias QueryListenOptions =
+    { includeDocumentMetadataChanges : Bool
+    , includeQueryMetadataChanges : Bool
     }
 
 
@@ -109,6 +126,10 @@ type alias FieldPath =
 
 
 type alias Json =
+    String
+
+
+type alias DocID =
     String
 
 
@@ -138,6 +159,7 @@ type ErrorCode
     | DataLoss
     | Unauthenticated
     | UndocumentedErrorByElmFirebase
+    | DocumentNotFound
 
 
 
@@ -147,6 +169,7 @@ type ErrorCode
 type CreateSubMsg msg
     = OnDocSnapshot PathString (DocumentSnapshot -> msg)
     | OnQuerySnapshot PathString (List Query) (QuerySnapshot -> msg)
+    | OnQuerySnapshotWithOptions PathString (List Query) (QuerySnapshot -> msg) QueryListenOptions
 
 
 type Msg msg
@@ -293,6 +316,11 @@ doc path =
     Doc path
 
 
+get : Doc schema dataType -> Task Error DocumentSnapshot
+get doc =
+    Native.FireStore.get <| getDocPathString doc
+
+
 set : ObjectEncoder dataType -> dataType -> Doc schema dataType -> Task Error ()
 set objEncoder data doc =
     Native.FireStore.set (encodeToJson objEncoder data) <| getDocPathString doc
@@ -352,11 +380,15 @@ collection path =
 
 
 getCollection : Collection schema dataType -> Task Error (List DocumentSnapshot)
-getCollection doc =
-    Native.FireStore.getCollection <| getCollectionPathString doc
+getCollection collection =
+    Native.FireStore.getCollection <| getCollectionPathString collection
 
 
-add : ObjectEncoder dataType -> dataType -> Collection schema dataType -> Task Error DocumentSnapshot
+
+--TODO: Add function should return a Doc instead of DocID
+
+
+add : ObjectEncoder dataType -> dataType -> Collection schema dataType -> Task Error DocID
 add objEncoder data collection =
     Native.FireStore.add (encodeToJson objEncoder data) <| getCollectionPathString collection
 
@@ -460,6 +492,11 @@ onCollectionSnapshot tagger (Collection queries path) =
     subscription <| OnQuerySnapshot (getPathString path) queries tagger
 
 
+onCollectionSnapshotWithOptions : (QuerySnapshot -> msg) -> QueryListenOptions -> Collection schema dataType -> Sub msg
+onCollectionSnapshotWithOptions tagger options (Collection queries path) =
+    subscription <| OnQuerySnapshotWithOptions (getPathString path) queries tagger options
+
+
 
 {--
 The code below are standard wiring required by effect manager.
@@ -489,6 +526,9 @@ subMap func sub =
 
         OnQuerySnapshot pathString queries tagger ->
             OnQuerySnapshot pathString queries (tagger >> func)
+
+        OnQuerySnapshotWithOptions pathString queries tagger options ->
+            OnQuerySnapshotWithOptions pathString queries (tagger >> func) options
 
 
 onEffects : Platform.Router msg (Msg msg) -> List (CreateSubMsg msg) -> State -> Task Never State
@@ -573,6 +613,11 @@ createSub router sub state =
                             |> Native.FireStore.onCollectionSnapshot (Array.fromList queries) pathString
                             |> always newState
 
+                    OnQuerySnapshotWithOptions pathString queries tagger options ->
+                        sendNewCollectionSnapshot router tagger
+                            |> Native.FireStore.onCollectionSnapshotWithOptions (Array.fromList queries) options pathString
+                            |> always newState
+
 
 sendNewDocSnapshot :
     Platform.Router msg (Msg msg)
@@ -618,6 +663,9 @@ getPathFromCreateSubMsg msg =
             pathString
 
         OnQuerySnapshot pathString _ _ ->
+            pathString
+
+        OnQuerySnapshotWithOptions pathString _ _ _ ->
             pathString
 
 

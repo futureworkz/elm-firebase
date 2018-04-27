@@ -11,7 +11,7 @@ var _user$project$Native_Auth = function() {
           )
         })
         .catch(function(error) {
-          return callback( _elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+          return callback( _elm_lang$core$Native_Scheduler.fail(elmFirebaseError(error)))
         })
     })
   }
@@ -25,7 +25,7 @@ var _user$project$Native_Auth = function() {
           )
         })
         .catch(function(error) {
-          return callback( _elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+          return callback( _elm_lang$core$Native_Scheduler.fail(elmFirebaseError(error)))
         })
     })
   }
@@ -47,7 +47,7 @@ var _user$project$Native_Auth = function() {
       firebase.auth().signOut().then(function() {
         return callback( _elm_lang$core$Native_Scheduler.succeed())
       }, function(error) {
-        return callback( _elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+        return callback( _elm_lang$core$Native_Scheduler.fail(elmFirebaseError(error)))
       })
     })
   }
@@ -60,7 +60,7 @@ var _user$project$Native_Auth = function() {
           return callback( _elm_lang$core$Native_Scheduler.succeed())
         })
         .catch(function(error) {
-          return callback( _elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+          return callback( _elm_lang$core$Native_Scheduler.fail(elmFirebaseError(error)))
         })
     })
   }
@@ -72,7 +72,7 @@ var _user$project$Native_Auth = function() {
           return callback( _elm_lang$core$Native_Scheduler.succeed())
         })
         .catch(function(error) {
-          return callback( _elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+          return callback( _elm_lang$core$Native_Scheduler.fail(elmFirebaseError(error)))
         })
     })
   }
@@ -87,7 +87,7 @@ var _user$project$Native_Auth = function() {
           return callback( _elm_lang$core$Native_Scheduler.succeed())
         })
         .catch(function(error) {
-          return callback( _elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+          return callback( _elm_lang$core$Native_Scheduler.fail(elmFirebaseError(error)))
         })
     })
   }
@@ -99,7 +99,7 @@ var _user$project$Native_Auth = function() {
           return callback( _elm_lang$core$Native_Scheduler.succeed(toUserType(user)))
         })
         .catch(function(error) {
-          return callback( _elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+          return callback( _elm_lang$core$Native_Scheduler.fail(elmFirebaseError(error)))
         })
     })
   }
@@ -111,7 +111,7 @@ var _user$project$Native_Auth = function() {
           return callback( _elm_lang$core$Native_Scheduler.succeed())
         })
         .catch(function(error) {
-          return callback( _elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
+          return callback( _elm_lang$core$Native_Scheduler.fail(elmFirebaseError(error)))
         })
     })
   }

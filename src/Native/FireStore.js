@@ -6,7 +6,7 @@ var _user$project$Native_FireStore = function() {
     return _elm_lang$core$Native_Scheduler.nativeBinding(
       function(callback) {
         var db = firebase.firestore()
-        
+
         try {
           db.doc(path)
             .get()
@@ -17,7 +17,9 @@ var _user$project$Native_FireStore = function() {
                 ))
               } else {
                 return callback(_elm_lang$core$Native_Scheduler.fail(
-                  elmFireStoreError({code: "doc-not-found"})
+                  elmFireStoreError({
+                    code: "doc-not-found"
+                  })
                 ))
               }
             })
@@ -28,7 +30,8 @@ var _user$project$Native_FireStore = function() {
           return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
         }
       }
-    )}  
+    )
+  }
 
   function set(data, path) {
     return _elm_lang$core$Native_Scheduler.nativeBinding(
@@ -49,7 +52,8 @@ var _user$project$Native_FireStore = function() {
           return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
         }
       }
-    )}
+    )
+  }
 
   function update(data, path) {
     return _elm_lang$core$Native_Scheduler.nativeBinding(
@@ -70,7 +74,8 @@ var _user$project$Native_FireStore = function() {
           return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
         }
       }
-    )}
+    )
+  }
 
   function delete_(path) {
     return _elm_lang$core$Native_Scheduler.nativeBinding(
@@ -79,7 +84,7 @@ var _user$project$Native_FireStore = function() {
 
         try {
           db.doc(path)
-            .delete() 
+            .delete()
             .then(function() {
               return callback(_elm_lang$core$Native_Scheduler.succeed())
             })
@@ -90,7 +95,8 @@ var _user$project$Native_FireStore = function() {
           return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
         }
       }
-    )}
+    )
+  }
 
   function batchAndCommit(operations) {
     return _elm_lang$core$Native_Scheduler.nativeBinding(
@@ -141,7 +147,7 @@ var _user$project$Native_FireStore = function() {
     return _elm_lang$core$Native_Scheduler.nativeBinding(
       function(callback) {
         var db = firebase.firestore()
-        
+
         try {
           db.collection(path)
             .get()
@@ -161,7 +167,8 @@ var _user$project$Native_FireStore = function() {
           return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
         }
       }
-    )}  
+    )
+  }
 
   function add(data, path) {
     return _elm_lang$core$Native_Scheduler.nativeBinding(
@@ -182,7 +189,8 @@ var _user$project$Native_FireStore = function() {
           return callback(_elm_lang$core$Native_Scheduler.fail(elmFireStoreError(error)))
         }
       }
-    )}  
+    )
+  }
 
   // -- Subscriptions functions
   var listeners = {}
@@ -200,13 +208,16 @@ var _user$project$Native_FireStore = function() {
     listeners[path] = db
       .doc(path)
       .onSnapshot(
-        function (doc) {
+        function(doc) {
           _elm_lang$core$Native_Scheduler.rawSpawn(A2(sendMsg, "", elmDocSnapshot(doc)))
         })
   }
 
   function onCollectionSnapshot(queries, path, sendMsg) {
-    onCollectionSnapshotWithOptions(queries, { includeDocumentMetadataChanges: false, includeQueryMetadataChanges: false }, path, sendMsg)
+    onCollectionSnapshotWithOptions(queries, {
+      includeDocumentMetadataChanges: false,
+      includeQueryMetadataChanges: false
+    }, path, sendMsg)
   }
 
   function onCollectionSnapshotWithOptions(queries, options, path, sendMsg) {
@@ -214,30 +225,100 @@ var _user$project$Native_FireStore = function() {
     var query = addQueries(queries.table, db.collection(path))
     listeners[path] =
       query
-        .onSnapshot(options, function (snapshot) {
-            const querySnapshot = {
-              docs: _elm_lang$core$Native_List.fromArray(
-                snapshot.docs.map(elmDocSnapshot)
-              ),
+      .onSnapshot(options, function(snapshot) {
+        const querySnapshot = {
+          docs: _elm_lang$core$Native_List.fromArray(
+            snapshot.docs.map(elmDocSnapshot)
+          ),
 
-              changes: _elm_lang$core$Native_List.fromArray(
-                snapshot.docChanges.map(function(change) {
-                  const type = change.type
-                  const documentChangeType = type[0].toUpperCase() + type.slice(1)
+          changes: _elm_lang$core$Native_List.fromArray(
+            snapshot.docChanges.map(function(change) {
+              const type = change.type
+              const documentChangeType = type[0].toUpperCase() + type.slice(1)
 
-                  return {
-                    type_: { ctor: documentChangeType },
-                    doc: elmDocSnapshot(change.doc)
-                  }
-                })
-              )
-            }
+              return {
+                type_: {
+                  ctor: documentChangeType
+                },
+                doc: elmDocSnapshot(change.doc)
+              }
+            })
+          )
+        }
 
-            _elm_lang$core$Native_Scheduler.rawSpawn(A2(sendMsg, "", querySnapshot))
-          })
+        _elm_lang$core$Native_Scheduler.rawSpawn(A2(sendMsg, "", querySnapshot))
+      })
   }
 
   // -- Helpers
+  var globalDocID = null
+
+  function getAllPaths(obj, paths, fields, maxLevel) {
+    _user$project$Firebase_FireStore$docID = F2(
+      function(_p17, _p16) {
+        var _p18 = _p16
+        return _p18._1
+      })
+
+    try {
+      fields(obj)
+    } catch (err) {
+      const regExp = /\'([^)]+)\'/
+      const key = regExp.exec(err)[1]
+      paths.push(key)
+
+      var newObj = {}
+      if (paths.length > 1) {
+        var object = newObj
+        for (var i = 0; i < paths.length - 1; i++) {
+          object = object[paths[i]] = {};
+        }
+      }
+
+      if (paths.length < maxLevel) {
+        return getAllPaths(newObj, paths, fields, maxLevel)
+      }
+    }
+
+    return paths
+  }
+
+  function getPathDocID(obj, paths, fields, maxLevel) {
+    _user$project$Firebase_FireStore$docID = F2(
+      function(_p17, _p16) {
+        globalDocID = _p17
+        return _p17
+      })
+
+    try {
+      if (fields(obj)) {
+        return fields(obj)
+      }
+    } catch (err) {
+      const regExp = /\'([^)]+)\'/
+      const key = regExp.exec(err)[1]
+      paths.push(key)
+
+      var newObj = {}
+      if (paths.length > 1) {
+        var object = newObj
+        for (var i = 0; i < paths.length - 1; i++) {
+          object = object[paths[i]] = {}
+        }
+      }
+
+      if (paths.length < maxLevel) {
+        return getPathDocID(newObj, paths, fields, maxLevel)
+      }
+    }
+
+    if (globalDocID != null) {
+      return globalDocID
+    }
+
+    return paths
+  }
+
   function pathString(fields) {
     /***
      * Hackish function to generate the full path based on fields
@@ -245,29 +326,30 @@ var _user$project$Native_FireStore = function() {
      ***/
     var path = ""
 
+    const maxLevel = fields.toString().split('return ').length - 1
+    const paths = getAllPaths(null, [], fields, maxLevel)
+    const docID = getPathDocID(null, [], fields, maxLevel)
+
+    paths.forEach(function(pathName) {
+      if (pathName == '_1') {
+        path = path + "/" + docID
+      } else {
+        path = path + "/" + pathName
+      }
+
+    })
+    globalDocID = null
+
     // Monkey patch docID function to get path IDs
     var oldDocID = _user$project$Firebase_FireStore$docID
     _user$project$Firebase_FireStore$docID = F2(
-      function (id, collection) {
+      function(id, collection) {
         if (path) {
           path = path + "/" + id
         }
         return A2(oldDocID, id, collection)
       }
     )
-
-    // Use JS Proxy to overwrite the default get behavior of {}
-    var schemaProxy = new Proxy({}, {
-      get: function (func, name) {
-        if (name !== '_1') { // caused by oldDocID
-          path = path + "/" + name
-        }
-        return schemaProxy
-      }
-    })
-
-    // Collect the path
-    fields(schemaProxy)
 
     // Release the memory
     _user$project$Firebase_FireStore$docID = oldDocID
@@ -347,15 +429,17 @@ function elmFireStoreError(error) {
       case "doc-not-found":
         return "DocumentNotFound"
 
-      default: 
+      default:
         return "UndocumentedErrorByElmFirebase"
     }
   }()
 
   return {
     ctor: "FireStoreError",
-    _0 : { ctor: fireStoreErrorCode },
-    _1 : error.message
+    _0: {
+      ctor: fireStoreErrorCode
+    },
+    _1: error.message
   }
 }
 
@@ -389,7 +473,7 @@ function addQueries(queries, ref) {
 
   const query = queries[0]
 
-  switch(query.ctor) {
+  switch (query.ctor) {
     case "Where":
       ref = ref.where(query._0, opString(query._1.ctor), query._2)
       break
@@ -407,7 +491,7 @@ function addQueries(queries, ref) {
 }
 
 function opString(op) {
-  switch(op) {
+  switch (op) {
     case "Gt":
       return ">"
     case "Gte":
@@ -422,7 +506,7 @@ function opString(op) {
 }
 
 function directionString(direction) {
-  switch(direction) {
+  switch (direction) {
     case "Asc":
       return "asc"
     case "Desc":

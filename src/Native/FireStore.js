@@ -485,6 +485,6 @@ function directionString(direction) {
     case "Asc":
       return "asc"
     case "Desc":
-      return "Desc"
+      return "desc"
   }
 }

@@ -134,6 +134,7 @@ type alias DocID =
 
 
 type alias ObjectEncoder dataType =
+    -- TODO: Should ObjectEncoder be ObjectEncoder data snapshot?
     List ( String, dataType -> JE.Value )
 
 

@@ -10,6 +10,7 @@ effect module Firebase.Auth
         , updateProfile
         , createUserWithEmailAndPassword
         , sendEmailVerification
+        , currentUser
         , onAuthStateChanged
         , User
         , Error(Error)
@@ -110,6 +111,11 @@ createUserWithEmailAndPassword email password =
 sendEmailVerification : Task Error ()
 sendEmailVerification =
     Native.Auth.sendEmailVerification ()
+
+
+currentUser : Task Never (Maybe User)
+currentUser =
+    Native.Auth.currentUser ()
 
 
 

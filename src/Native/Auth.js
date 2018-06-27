@@ -116,6 +116,26 @@ var _user$project$Native_Auth = function() {
     })
   }
 
+  function currentUser() {
+    return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback) {
+      // firebase.auth().currentUser returns null if auth is not initialised
+      // See: https://firebase.google.com/docs/auth/web/manage-users
+      const unsubscribe = firebase.auth().onAuthStateChanged(function(user) {
+        if (user) {
+          const justUser = {
+            ctor: 'Just',
+            _0: toUserType(user)
+          }
+          callback( _elm_lang$core$Native_Scheduler.succeed(justUser))
+        } else {
+          callback( _elm_lang$core$Native_Scheduler.succeed({ ctor: 'Nothing' }))
+        }
+
+        unsubscribe()
+      })
+    })
+  }
+
   var unsubscribeAuth = null
   function onAuthStateChanged(sendMsg) {
     if (unsubscribeAuth) unsubscribeAuth()
@@ -151,6 +171,7 @@ var _user$project$Native_Auth = function() {
     updateProfile: F2(updateProfile),
     createUserWithEmailAndPassword: F2(createUserWithEmailAndPassword),
     sendEmailVerification: sendEmailVerification,
+    currentUser: currentUser,
     onAuthStateChanged: onAuthStateChanged
   }
 }()

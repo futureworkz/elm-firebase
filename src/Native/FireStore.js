@@ -251,74 +251,6 @@ var _user$project$Native_FireStore = function() {
   }
 
   // -- Helpers
-  var globalDocID = null
-
-  function getAllPaths(obj, paths, fields, maxLevel) {
-    _user$project$Firebase_FireStore$docID = F2(
-      function(_p17, _p16) {
-        var _p18 = _p16
-        return _p18._1
-      })
-
-    try {
-      fields(obj)
-    } catch (err) {
-      const regExp = /\'([^)]+)\'/
-      const key = regExp.exec(err)[1]
-      paths.push(key)
-
-      var newObj = {}
-      if (paths.length > 1) {
-        var object = newObj
-        for (var i = 0; i < paths.length - 1; i++) {
-          object = object[paths[i]] = {};
-        }
-      }
-
-      if (paths.length < maxLevel) {
-        return getAllPaths(newObj, paths, fields, maxLevel)
-      }
-    }
-
-    return paths
-  }
-
-  function getPathDocID(obj, paths, fields, maxLevel) {
-    _user$project$Firebase_FireStore$docID = F2(
-      function(_p17, _p16) {
-        globalDocID = _p17
-        return _p17
-      })
-
-    try {
-      if (fields(obj)) {
-        return fields(obj)
-      }
-    } catch (err) {
-      const regExp = /\'([^)]+)\'/
-      const key = regExp.exec(err)[1]
-      paths.push(key)
-
-      var newObj = {}
-      if (paths.length > 1) {
-        var object = newObj
-        for (var i = 0; i < paths.length - 1; i++) {
-          object = object[paths[i]] = {}
-        }
-      }
-
-      if (paths.length < maxLevel) {
-        return getPathDocID(newObj, paths, fields, maxLevel)
-      }
-    }
-
-    if (globalDocID != null) {
-      return globalDocID
-    }
-
-    return paths
-  }
-
   function pathString(fields) {
     /***
      * Hackish function to generate the full path based on fields
@@ -326,35 +258,78 @@ var _user$project$Native_FireStore = function() {
      ***/
     var path = ""
 
-    const maxLevel = fields.toString().split('return ').length - 1
-    const paths = getAllPaths(null, [], fields, maxLevel)
-    const docID = getPathDocID(null, [], fields, maxLevel)
-
-    paths.forEach(function(pathName) {
-      if (pathName == '_1') {
-        path = path + "/" + docID
-      } else {
-        path = path + "/" + pathName
-      }
-
-    })
-    globalDocID = null
-
-    // Monkey patch docID function to get path IDs
-    var oldDocID = _user$project$Firebase_FireStore$docID
-    _user$project$Firebase_FireStore$docID = F2(
-      function(id, collection) {
-        if (path) {
-          path = path + "/" + id
+    if (typeof Proxy === 'function') {
+      // Monkey patch docID function to get path IDs
+      var oldDocID = _user$project$Firebase_FireStore$docID
+      _user$project$Firebase_FireStore$docID = F2(
+        function(id, collection) {
+          if (path) {
+            path = path + "/" + id
+          }
+          return A2(oldDocID, id, collection)
         }
-        return A2(oldDocID, id, collection)
-      }
-    )
+      )
 
-    // Release the memory
-    _user$project$Firebase_FireStore$docID = oldDocID
+      // Use JS Proxy to overwrite the default get behavior of {}
+      var schemaProxy = new Proxy({}, {
+        get: function (func, name) {
+          if (name !== '_1') { // caused by oldDocID
+            path = path + "/" + name
+          }
+          return schemaProxy
+        }
+      })
+
+      // Collect the path
+      fields(schemaProxy)
+
+      // Release the memory
+      _user$project$Firebase_FireStore$docID = oldDocID
+    } else {
+      // Proxy is not supported
+      // Note that we are only targetting PhantomJS in this method
+      // so that Google Indexing will work
+  
+      // Monkey patch docID function to get path IDs
+      var oldDocID = _user$project$Firebase_FireStore$docID
+      _user$project$Firebase_FireStore$docID = F2(
+        function(id, collection) {
+          return collection[id]
+        }
+      )
+
+      path = getPathViaTryCatch(undefined, [], fields, 0)
+
+      // Release the memory
+      _user$project$Firebase_FireStore$docID = oldDocID
+    }
 
     return path
+  }
+
+  function getPathViaTryCatch(obj, paths, fields) {
+    try {
+      fields(obj)
+    } catch (error) {
+      // Extract the path fragment from the error message
+      const regExp = /\'([^)]+)\'/
+      const pathFragment = regExp.exec(error.message)[1]
+
+      // creates a new object with a structure as per the paths
+      // so that we can call fields again on the obj and get the next error
+      var newObj = {}
+      paths.slice(0).reverse().forEach(function(field) {
+        newObj = { [field]: newObj }
+      })
+
+      // saves our new-found field in the paths
+      paths.push(pathFragment)
+
+      // recurse to get the next error with the newObj
+      return getPathViaTryCatch(newObj, paths, fields)
+    }
+
+    return paths.join('/')
   }
 
   function generateID() {

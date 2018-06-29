@@ -319,7 +319,7 @@ var _user$project$Native_FireStore = function() {
       // so that we can call fields again on the obj and get the next error
       var newObj = {}
       paths.slice(0).reverse().forEach(function(field) {
-        newObj = { [field]: newObj }
+        newObj[field] = newObj
       })
 
       // saves our new-found field in the paths

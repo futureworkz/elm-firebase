@@ -143,13 +143,13 @@ var _user$project$Native_FireStore = function() {
   }
 
   // -- Collection functions
-  function getCollection(path) {
+  function getCollection(queries, path) {
+    var db = firebase.firestore()
+    var query = addQueries(queries.table, db.collection(path))
     return _elm_lang$core$Native_Scheduler.nativeBinding(
       function(callback) {
-        var db = firebase.firestore()
-
         try {
-          db.collection(path)
+          query
             .get()
             .then(function(querySnapshot) {
               const docs = []
@@ -342,7 +342,7 @@ var _user$project$Native_FireStore = function() {
   }
 
   return {
-    getCollection: getCollection,
+    getCollection: F2(getCollection),
     get: get,
     set: F2(set),
     add: F2(add),
@@ -450,6 +450,10 @@ function addQueries(queries, ref) {
 
   switch (query.ctor) {
     case "Where":
+      ref = ref.where(query._0, opString(query._1.ctor), query._2)
+      break
+
+    case "WhereDate":
       ref = ref.where(query._0, opString(query._1.ctor), query._2)
       break
 

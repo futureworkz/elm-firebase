@@ -40,6 +40,7 @@ effect module Firebase.FireStore
         , collection
         , add
         , where_
+        , whereDate
         , orderBy
         , limit
         , isAdded
@@ -216,6 +217,7 @@ type DocumentChangeType
 
 type Query
     = Where FieldPath Op String
+    | WhereDate FieldPath Op Date
     | Limit Int
     | OrderBy FieldPath Direction
 
@@ -381,8 +383,15 @@ collection path =
 
 
 getCollection : Collection schema dataType -> Task Error (List DocumentSnapshot)
-getCollection collection =
-    Native.FireStore.getCollection <| getCollectionPathString collection
+getCollection (Collection queries path) =
+    let
+        queryArray =
+            (Array.fromList queries)
+
+        pathString =
+            getPathString path
+    in
+        Native.FireStore.getCollection queryArray pathString
 
 
 
@@ -397,6 +406,11 @@ add objEncoder data collection =
 where_ : FieldPath -> Op -> String -> Collection schema dataType -> Collection schema dataType
 where_ fieldPath op value (Collection queries path) =
     Collection (queries ++ [ Where fieldPath op value ]) path
+
+
+whereDate : FieldPath -> Op -> Date -> Collection schema dataType -> Collection schema dataType
+whereDate fieldPath op value (Collection queries path) =
+    Collection (queries ++ [ WhereDate fieldPath op value ]) path
 
 
 orderBy : FieldPath -> Direction -> Collection schema dataType -> Collection schema dataType

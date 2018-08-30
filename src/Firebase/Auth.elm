@@ -12,6 +12,7 @@ effect module Firebase.Auth
         , sendEmailVerification
         , currentUser
         , onAuthStateChanged
+        , delete
         , User
         , Error(Error)
         , ErrorCode(..)
@@ -143,6 +144,11 @@ init =
 onAuthStateChanged : (Maybe User -> msg) -> Sub msg
 onAuthStateChanged tagger =
     subscription (OnAuthStateChanged tagger)
+
+
+delete : Task Error ()
+delete =
+    Native.Auth.deleteAuthUser ()
 
 
 subMap : (a -> b) -> SubMsg a -> SubMsg b

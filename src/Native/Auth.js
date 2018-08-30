@@ -161,6 +161,18 @@ var _user$project$Native_Auth = function() {
     }
   }
 
+  function deleteAuthUser() {
+    return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback) {
+      firebase.auth().currentUser.delete()
+        .then(function(_) {
+          return callback( _elm_lang$core$Native_Scheduler.succeed())
+        })
+        .catch(function(error) {
+          return callback( _elm_lang$core$Native_Scheduler.fail(elmFirebaseError(error)))
+        })
+    })
+  }
+
   return {
     signInWithEmailAndPassword: F2(signInWithEmailAndPassword),
     signInAndRetrieveDataWithEmailAndPassword: F2(signInAndRetrieveDataWithEmailAndPassword),
@@ -172,7 +184,8 @@ var _user$project$Native_Auth = function() {
     createUserWithEmailAndPassword: F2(createUserWithEmailAndPassword),
     sendEmailVerification: sendEmailVerification,
     currentUser: currentUser,
-    onAuthStateChanged: onAuthStateChanged
+    onAuthStateChanged: onAuthStateChanged,
+    deleteAuthUser: deleteAuthUser
   }
 }()
 

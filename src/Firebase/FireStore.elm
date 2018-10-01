@@ -111,8 +111,7 @@ type alias QuerySnapshot =
 
 
 type alias QueryListenOptions =
-    { includeDocumentMetadataChanges : Bool
-    , includeQueryMetadataChanges : Bool
+    { includeMetadataChanges : Bool
     }
 
 

@@ -215,8 +215,7 @@ var _user$project$Native_FireStore = function() {
 
   function onCollectionSnapshot(queries, path, sendMsg) {
     onCollectionSnapshotWithOptions(queries, {
-      includeDocumentMetadataChanges: false,
-      includeQueryMetadataChanges: false
+      includeMetadataChanges: false
     }, path, sendMsg)
   }
 
@@ -232,7 +231,7 @@ var _user$project$Native_FireStore = function() {
           ),
 
           changes: _elm_lang$core$Native_List.fromArray(
-            snapshot.docChanges.map(function(change) {
+            snapshot.docChanges().map(function(change) {
               const type = change.type
               const documentChangeType = type[0].toUpperCase() + type.slice(1)
 
@@ -359,11 +358,27 @@ var _user$project$Native_FireStore = function() {
 }()
 
 function elmDocSnapshot(doc) {
+  const convertedData = convertFirebaseTimestampToDate(doc.data())
+
   return {
     id: doc.id,
-    data: JSON.stringify(doc.data()),
+    data: JSON.stringify(convertedData),
     metadata: doc.metadata
   }
+}
+
+// Since Firebase 5, Date is now stored as a Firebase Timestamp object
+// We convert it into JS Date for consistency
+function convertFirebaseTimestampToDate(docData) {
+  Object.keys(docData || {}).forEach(fieldName => {
+    const value = docData[fieldName]
+    // typeof null is an object!!!!!
+    if (value != null && typeof value == "object" && typeof value.toDate == "function") {
+      docData[fieldName] = value.toDate()
+    }
+  })
+  
+  return docData
 }
 
 function elmFireStoreError(error) {

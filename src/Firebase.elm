@@ -1,8 +1,6 @@
 module Firebase exposing (..)
 
 import Task exposing (Task)
-import Native.SDK.Firebase
-import Native.SDK.FireStore
 import Native.Firebase
 
 

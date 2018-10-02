@@ -236,6 +236,7 @@ type Op
     | Eq
     | Lt
     | Lte
+    | ArrayContains
 
 
 

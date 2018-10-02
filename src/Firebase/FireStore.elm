@@ -204,6 +204,10 @@ type alias PathString =
     String
 
 
+type alias ListenerID =
+    String
+
+
 type ListOf a
     = ListOf String a
 
@@ -567,16 +571,16 @@ onSelfMsg router msg state =
 removeSubs : List (CreateSubMsg msg) -> State -> State
 removeSubs subs state =
     let
-        subPaths =
-            List.map getPathFromCreateSubMsg subs
+        listenerIDs =
+            List.map createListenerID subs
 
-        isInSubPaths =
-            \path -> List.member path subPaths
+        isAlreadySubscribed =
+            \listenerID -> List.member listenerID listenerIDs
 
-        ( newState, removedPaths ) =
-            List.partition isInSubPaths state
+        ( newState, removedListeners ) =
+            List.partition isAlreadySubscribed state
     in
-        List.map Native.FireStore.removeListener removedPaths
+        List.map Native.FireStore.removeListener removedListeners
             |> always newState
 
 
@@ -585,10 +589,10 @@ addNewSubs router subs state =
     case subs of
         sub :: rest ->
             let
-                subPath =
-                    getPathFromCreateSubMsg sub
+                listenerID =
+                    createListenerID sub
             in
-                case List.member subPath state of
+                case List.member listenerID state of
                     True ->
                         addNewSubs router rest state
 
@@ -603,34 +607,63 @@ addNewSubs router subs state =
 createSub : Platform.Router msg (Msg msg) -> CreateSubMsg msg -> State -> State
 createSub router sub state =
     let
-        subPath =
-            getPathFromCreateSubMsg sub
+        listenerID =
+            createListenerID sub
 
-        subPathIsInState =
-            List.member subPath state
+        subIsAlreadySubscribed =
+            List.member listenerID state
     in
-        if subPathIsInState then
+        if subIsAlreadySubscribed then
             state
         else
             let
                 newState =
-                    subPath :: state
+                    listenerID :: state
             in
                 case sub of
                     OnDocSnapshot pathString tagger ->
                         sendNewDocSnapshot router tagger
-                            |> Native.FireStore.onDocSnapshot pathString
+                            |> Native.FireStore.onDocSnapshot listenerID pathString
                             |> always newState
 
                     OnQuerySnapshot pathString queries tagger ->
                         sendNewCollectionSnapshot router tagger
-                            |> Native.FireStore.onCollectionSnapshot (Array.fromList queries) pathString
+                            |> Native.FireStore.onCollectionSnapshot listenerID (Array.fromList queries) pathString
                             |> always newState
 
                     OnQuerySnapshotWithOptions pathString queries tagger options ->
                         sendNewCollectionSnapshot router tagger
-                            |> Native.FireStore.onCollectionSnapshotWithOptions (Array.fromList queries) options pathString
+                            |> Native.FireStore.onCollectionSnapshotWithOptions listenerID (Array.fromList queries) options pathString
                             |> always newState
+
+
+createListenerID : CreateSubMsg msg -> ListenerID
+createListenerID subMsg =
+    case subMsg of
+        OnDocSnapshot pathString _ ->
+            pathString
+
+        OnQuerySnapshot pathString queries _ ->
+            pathString ++ (String.join "" <| List.map serializeQuery queries)
+
+        OnQuerySnapshotWithOptions pathString queries _ _ ->
+            pathString ++ (String.join "" <| List.map serializeQuery queries)
+
+
+serializeQuery : Query -> String
+serializeQuery query =
+    case query of
+        Where field op value ->
+            "W" ++ field ++ toString op ++ value
+
+        WhereDate field op date ->
+            "D" ++ field ++ toString op ++ toString (Date.toTime date)
+
+        Limit limit ->
+            "L" ++ toString limit
+
+        OrderBy field direction ->
+            "O" ++ field ++ toString direction
 
 
 sendNewDocSnapshot :

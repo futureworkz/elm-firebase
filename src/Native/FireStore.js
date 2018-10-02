@@ -195,17 +195,17 @@ var _user$project$Native_FireStore = function() {
   // -- Subscriptions functions
   var listeners = {}
 
-  function removeListener(path) {
-    const listener = listeners[path]
+  function removeListener(listenerID) {
+    const listener = listeners[listenerID]
     if (listener) {
       listener()
-      delete listeners[path]
+      delete listeners[listenerID]
     }
   }
 
-  function onDocSnapshot(path, sendMsg) {
+  function onDocSnapshot(listenerID, path, sendMsg) {
     var db = firebase.firestore()
-    listeners[path] = db
+    listeners[listenerID] = db
       .doc(path)
       .onSnapshot(
         function(doc) {
@@ -213,16 +213,16 @@ var _user$project$Native_FireStore = function() {
         })
   }
 
-  function onCollectionSnapshot(queries, path, sendMsg) {
-    onCollectionSnapshotWithOptions(queries, {
+  function onCollectionSnapshot(listenerID, queries, path, sendMsg) {
+    onCollectionSnapshotWithOptions(listenerID, queries, {
       includeMetadataChanges: false
     }, path, sendMsg)
   }
 
-  function onCollectionSnapshotWithOptions(queries, options, path, sendMsg) {
+  function onCollectionSnapshotWithOptions(listenerID, queries, options, path, sendMsg) {
     var db = firebase.firestore()
     var query = addQueries(queries.table, db.collection(path))
-    listeners[path] =
+    listeners[listenerID] =
       query
       .onSnapshot(options, function(snapshot) {
         const querySnapshot = {
@@ -349,9 +349,9 @@ var _user$project$Native_FireStore = function() {
     delete_: delete_,
     batchAndCommit: batchAndCommit,
     removeListener: removeListener,
-    onDocSnapshot: F2(onDocSnapshot),
-    onCollectionSnapshot: F3(onCollectionSnapshot),
-    onCollectionSnapshotWithOptions: F4(onCollectionSnapshotWithOptions),
+    onDocSnapshot: F3(onDocSnapshot),
+    onCollectionSnapshot: F4(onCollectionSnapshot),
+    onCollectionSnapshotWithOptions: F5(onCollectionSnapshotWithOptions),
     pathString: pathString,
     generateID: generateID
   }

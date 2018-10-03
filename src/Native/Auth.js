@@ -95,8 +95,8 @@ var _user$project$Native_Auth = function() {
   function createUserWithEmailAndPassword(email, password) {
     return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback) {
       firebase.auth().createUserWithEmailAndPassword(email, password)
-        .then(function(user){
-          return callback( _elm_lang$core$Native_Scheduler.succeed(toUserType(user)))
+        .then(function(data){
+          return callback( _elm_lang$core$Native_Scheduler.succeed(toUserType(data.user)))
         })
         .catch(function(error) {
           return callback( _elm_lang$core$Native_Scheduler.fail(elmFirebaseError(error)))

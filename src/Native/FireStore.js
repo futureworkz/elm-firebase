@@ -496,6 +496,8 @@ function opString(op) {
       return "<"
     case "Lte":
       return "<="
+    case "ArrayContains":
+      return "array-contains"
   }
 }
 

@@ -53,6 +53,7 @@ effect module Firebase.FireStore
         , eq
         , lt
         , lte
+        , arrayContains
         , listOf
         , listString
         , listObject
@@ -490,6 +491,11 @@ lt =
 lte : Op
 lte =
     Lte
+
+
+arrayContains : Op
+arrayContains =
+    ArrayContains
 
 
 generateID : Task x String

@@ -370,7 +370,7 @@ function elmDocSnapshot(doc) {
 // Since Firebase 5, Date is now stored as a Firebase Timestamp object
 // We convert it into JS Date for consistency
 function convertFirebaseTimestampToDate(docData) {
-  Object.keys(docData || {}).forEach(fieldName => {
+  Object.keys(docData || {}).forEach(function(fieldName) {
     const value = docData[fieldName]
     // typeof null is an object!!!!!
     if (value != null && typeof value == "object" && typeof value.toDate == "function") {

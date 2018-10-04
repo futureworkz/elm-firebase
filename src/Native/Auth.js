@@ -16,20 +16,6 @@ var _user$project$Native_Auth = function() {
     })
   }
 
-  function signInAndRetrieveDataWithEmailAndPassword(email, password) {
-    return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback) {
-      firebase.auth().signInAndRetrieveDataWithEmailAndPassword(email, password)
-        .then(function(snapshot) {
-          return callback(
-            _elm_lang$core$Native_Scheduler.succeed(toUserType(snapshot.user))
-          )
-        })
-        .catch(function(error) {
-          return callback( _elm_lang$core$Native_Scheduler.fail(elmFirebaseError(error)))
-        })
-    })
-  }
-
   function signInAnonymously() {
     return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback) {
       firebase.auth().signInAnonymously().then(function(user) {
@@ -175,7 +161,6 @@ var _user$project$Native_Auth = function() {
 
   return {
     signInWithEmailAndPassword: F2(signInWithEmailAndPassword),
-    signInAndRetrieveDataWithEmailAndPassword: F2(signInAndRetrieveDataWithEmailAndPassword),
     signInAnonymously: signInAnonymously,
     signOut: signOut,
     sendPasswordResetEmail: sendPasswordResetEmail,

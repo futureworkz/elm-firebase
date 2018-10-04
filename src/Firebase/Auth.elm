@@ -2,7 +2,6 @@ effect module Firebase.Auth
     where { subscription = SubMsg }
     exposing
         ( signInWithEmailAndPassword
-        , signInAndRetrieveDataWithEmailAndPassword
         , signInAnonymously
         , signOut
         , sendPasswordResetEmail
@@ -72,11 +71,6 @@ type alias PhotoURL =
 signInWithEmailAndPassword : Email -> Password -> Task Error User
 signInWithEmailAndPassword email password =
     Native.Auth.signInWithEmailAndPassword email password
-
-
-signInAndRetrieveDataWithEmailAndPassword : Email -> Password -> Task Error User
-signInAndRetrieveDataWithEmailAndPassword email password =
-    Native.Auth.signInAndRetrieveDataWithEmailAndPassword email password
 
 
 signInAnonymously : Task Never User

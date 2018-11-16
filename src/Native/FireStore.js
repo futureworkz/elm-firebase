@@ -471,6 +471,10 @@ function addQueries(queries, ref) {
     case "WhereDate":
       ref = ref.where(query._0, opString(query._1.ctor), query._2)
       break
+    
+    case "WhereBool":
+      ref = ref.where(query._0, opString(query._1.ctor), query._2)
+      break
 
     case "Limit":
       ref = ref.limit(query._0)

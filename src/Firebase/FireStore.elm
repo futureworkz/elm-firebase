@@ -40,6 +40,7 @@ effect module Firebase.FireStore
         , collection
         , add
         , where_
+        , whereBool
         , whereDate
         , orderBy
         , limit
@@ -222,6 +223,7 @@ type DocumentChangeType
 type Query
     = Where FieldPath Op String
     | WhereDate FieldPath Op Date
+    | WhereBool FieldPath Op Bool
     | Limit Int
     | OrderBy FieldPath Direction
 
@@ -416,6 +418,11 @@ where_ fieldPath op value (Collection queries path) =
 whereDate : FieldPath -> Op -> Date -> Collection schema dataType -> Collection schema dataType
 whereDate fieldPath op value (Collection queries path) =
     Collection (queries ++ [ WhereDate fieldPath op value ]) path
+
+
+whereBool : FieldPath -> Op -> Bool -> Collection schema dataType -> Collection schema dataType
+whereBool fieldPath op value (Collection queries path) =
+    Collection (queries ++ [ WhereBool fieldPath op value ]) path
 
 
 orderBy : FieldPath -> Direction -> Collection schema dataType -> Collection schema dataType
@@ -665,6 +672,9 @@ serializeQuery query =
 
         WhereDate field op date ->
             "D" ++ field ++ toString op ++ toString (Date.toTime date)
+
+        WhereBool field op bool ->
+            "B" ++ field ++ toString op ++ toString bool
 
         Limit limit ->
             "L" ++ toString limit

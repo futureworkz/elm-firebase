@@ -375,6 +375,10 @@ function convertFirebaseTimestampToDate(docData) {
     // typeof null is an object!!!!!
     if (value != null && typeof value == "object" && typeof value.toDate == "function") {
       docData[fieldName] = value.toDate()
+    } else {
+      if (value != null && typeof value == "object" && Object.keys(value).length > 0){
+        convertFirebaseTimestampToDate(value)
+      }
     }
   })
   

@@ -14,7 +14,7 @@ var _user$project$Native_Firebase = function() {
           .then(function() {
             return callback(_elm_lang$core$Native_Scheduler.succeed())
           })
-          .catch(function(err) {
+          .catch(function(error) {
             return callback(_elm_lang$core$Native_Scheduler.fail(elmFirebaseError(error)))
           })
       }

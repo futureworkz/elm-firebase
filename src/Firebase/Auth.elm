@@ -1,21 +1,19 @@
-effect module Firebase.Auth
-    where { subscription = SubMsg }
-    exposing
-        ( signInWithEmailAndPassword
-        , signInAnonymously
-        , signOut
-        , sendPasswordResetEmail
-        , updatePassword
-        , updateProfile
-        , createUserWithEmailAndPassword
-        , sendEmailVerification
-        , currentUser
-        , onAuthStateChanged
-        , delete
-        , User
-        , Error(Error)
-        , ErrorCode(..)
-        )
+effect module Firebase.Auth where { subscription = SubMsg } exposing
+    ( Error(Error)
+    , ErrorCode(..)
+    , User
+    , createUserWithEmailAndPassword
+    , currentUser
+    , delete
+    , onAuthStateChanged
+    , sendEmailVerification
+    , sendPasswordResetEmail
+    , signInAnonymously
+    , signInWithEmailAndPassword
+    , signOut
+    , updatePassword
+    , updateProfile
+    )
 
 import Native.Auth
 import Task exposing (Task)
@@ -159,8 +157,8 @@ onEffects router subs state =
                     \_ user ->
                         Platform.sendToSelf router (AuthStateChanged user)
             in
-                Native.Auth.onAuthStateChanged listener
-                    |> always (Task.succeed <| Initialized subs)
+            Native.Auth.onAuthStateChanged listener
+                |> always (Task.succeed <| Initialized subs)
 
         Initialized _ ->
             Task.succeed (Initialized subs)

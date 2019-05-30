@@ -10,7 +10,7 @@ var _user$project$Native_Firebase = function() {
 
     return _elm_lang$core$Native_Scheduler.nativeBinding(
       function(callback) {
-        firebase.firestore().enablePersistence()
+        firebase.firestore().enablePersistence({ experimentalTabSynchronization:true })
           .then(function() {
             return callback(_elm_lang$core$Native_Scheduler.succeed())
           })
